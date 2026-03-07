@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
-  { to: "/", label: "Home" },
-  { to: "/services", label: "Services" },
-  { to: "/products", label: "Products" },
-  { to: "/why-pawamore", label: "Why PawaMore" },
-  { to: "/about", label: "About Us" },
-  { to: "/blog", label: "Blog" },
-  { to: "/contact", label: "Contact" },
-];
+{ to: "/", label: "Home" },
+{ to: "/services", label: "Services" },
+{ to: "/products", label: "Products" },
+{ to: "/why-pawamore", label: "Why PawaMore" },
+{ to: "/about", label: "About Us" },
+{ to: "/blog", label: "Blog" },
+{ to: "/contact", label: "Contact" }];
+
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,26 +32,26 @@ const Navbar = () => {
               PawaMore
             </span>
             <span className="font-display text-[10px] text-primary-foreground/60 uppercase tracking-[0.2em]">
-              Systems
+              Systems Ltd  
             </span>
           </div>
         </Link>
 
         {/* Desktop Nav */}
         <div className="hidden lg:flex items-center gap-1">
-          {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                location.pathname === link.to
-                  ? "text-accent font-bold"
-                  : "text-primary-foreground/80 hover:text-accent"
-              }`}
-            >
+          {navLinks.map((link) =>
+          <Link
+            key={link.to}
+            to={link.to}
+            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            location.pathname === link.to ?
+            "text-accent font-bold" :
+            "text-primary-foreground/80 hover:text-accent"}`
+            }>
+            
               {link.label}
             </Link>
-          ))}
+          )}
         </div>
 
         {/* CTA */}
@@ -67,42 +67,42 @@ const Navbar = () => {
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="lg:hidden text-primary-foreground p-2"
-          aria-label="Toggle menu"
-        >
+          aria-label="Toggle menu">
+          
           {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
       {/* Mobile Menu */}
       <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-forest border-t border-primary-foreground/10 overflow-hidden"
-          >
+        {isOpen &&
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          className="lg:hidden bg-forest border-t border-primary-foreground/10 overflow-hidden">
+          
             <div className="container py-4 flex flex-col gap-2">
-              {navLinks.map((link, i) => (
-                <motion.div
-                  key={link.to}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                >
+              {navLinks.map((link, i) =>
+            <motion.div
+              key={link.to}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05 }}>
+              
                   <Link
-                    to={link.to}
-                    onClick={() => setIsOpen(false)}
-                    className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                      location.pathname === link.to
-                        ? "bg-primary text-primary-foreground"
-                        : "text-primary-foreground/80 hover:bg-primary/20"
-                    }`}
-                  >
+                to={link.to}
+                onClick={() => setIsOpen(false)}
+                className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${
+                location.pathname === link.to ?
+                "bg-primary text-primary-foreground" :
+                "text-primary-foreground/80 hover:bg-primary/20"}`
+                }>
+                
                     {link.label}
                   </Link>
                 </motion.div>
-              ))}
+            )}
               <Link to="/contact" onClick={() => setIsOpen(false)}>
                 <Button variant="amber" className="w-full mt-2">
                   Book Free Power Audit →
@@ -110,10 +110,10 @@ const Navbar = () => {
               </Link>
             </div>
           </motion.div>
-        )}
+        }
       </AnimatePresence>
-    </nav>
-  );
+    </nav>);
+
 };
 
 export default Navbar;
