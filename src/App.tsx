@@ -37,6 +37,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<PageWrapper title="PawaMore Systems — Solar & Battery Installation Nigeria"><Index /></PageWrapper>} />
           <Route path="/about" element={<PageWrapper title="About PawaMore Systems — Nigeria's Most Trusted Energy Company"><About /></PageWrapper>} />
