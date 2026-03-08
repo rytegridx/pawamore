@@ -40,6 +40,7 @@ const brands = ["EcoFlow", "Itel Energy", "Felicity Solar", "Luminous", "Bluetti
 
 const Products = () => {
   useSEO({ title: "Solar Systems & Battery Products — PawaMore Systems Nigeria", description: "Home battery systems from ₦380,000. Solar + battery combos from ₦780,000. EcoFlow, Itel Energy, Felicity Solar. Genuine products, professionally installed." });
+  const { addToCart } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
