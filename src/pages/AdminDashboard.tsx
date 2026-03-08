@@ -91,7 +91,7 @@ const AdminDashboard = () => {
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
+    await supabase.from("orders").update({ status: newStatus as any }).eq("id", orderId);
     setOrders(orders.map((o) => o.id === orderId ? { ...o, status: newStatus } : o));
   };
 

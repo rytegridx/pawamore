@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import Products from "./pages/Products";
+import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
 import WhyPawamore from "./pages/WhyPawamore";
 import Blog from "./pages/Blog";
