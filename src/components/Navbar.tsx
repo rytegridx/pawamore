@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, User, LogOut, Shield } from "lucide-react";
+import { Menu, X, User, LogOut, Shield, ShoppingCart } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +21,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
+  const { itemCount } = useCart();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-forest/95 backdrop-blur-md">
@@ -47,6 +49,12 @@ const Navbar = () => {
 
         {/* Desktop CTA / Auth */}
         <div className="hidden lg:flex items-center gap-2">
+          <Link to="/cart" className="relative text-primary-foreground/80 hover:text-accent p-2">
+            <ShoppingCart className="w-5 h-5" />
+            {itemCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-accent text-foreground text-[10px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center">{itemCount}</span>
+            )}
+          </Link>
           {user ? (
             <>
               {isAdmin && (
@@ -56,6 +64,11 @@ const Navbar = () => {
                   </Button>
                 </Link>
               )}
+              <Link to="/orders">
+                <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-accent">
+                  <User className="w-4 h-4 mr-1" /> Orders
+                </Button>
+              </Link>
               <Button variant="ghost" size="sm" onClick={signOut} className="text-primary-foreground/80 hover:text-accent">
                 <LogOut className="w-4 h-4 mr-1" /> Logout
               </Button>
@@ -97,6 +110,9 @@ const Navbar = () => {
 
               {/* Auth links mobile */}
               <div className="border-t border-primary-foreground/10 mt-2 pt-2">
+                <Link to="/cart" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg text-base font-medium text-primary-foreground/80 hover:bg-primary/20">
+                  <ShoppingCart className="w-4 h-4 inline mr-2" /> Cart {itemCount > 0 && `(${itemCount})`}
+                </Link>
                 {user ? (
                   <>
                     {isAdmin && (
@@ -104,6 +120,9 @@ const Navbar = () => {
                         <Shield className="w-4 h-4 inline mr-2" /> Admin Dashboard
                       </Link>
                     )}
+                    <Link to="/orders" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg text-base font-medium text-primary-foreground/80 hover:bg-primary/20">
+                      <User className="w-4 h-4 inline mr-2" /> My Orders
+                    </Link>
                     <button onClick={() => { signOut(); setIsOpen(false); }} className="block w-full text-left px-4 py-3 rounded-lg text-base font-medium text-primary-foreground/80 hover:bg-primary/20">
                       <LogOut className="w-4 h-4 inline mr-2" /> Logout
                     </button>

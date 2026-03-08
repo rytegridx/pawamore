@@ -3,9 +3,10 @@ import Layout from "@/components/Layout";
 import ScrollReveal from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Battery, Sun, Zap, CheckCircle, Star, Image as ImageIcon } from "lucide-react";
+import { Battery, Sun, Zap, CheckCircle, Star, Image as ImageIcon, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import useSEO from "@/hooks/useSEO";
+import { useCart } from "@/contexts/CartContext";
 import batteryImg from "@/assets/battery-system.jpg";
 
 interface Product {
@@ -39,6 +40,7 @@ const brands = ["EcoFlow", "Itel Energy", "Felicity Solar", "Luminous", "Bluetti
 
 const Products = () => {
   useSEO({ title: "Solar Systems & Battery Products — PawaMore Systems Nigeria", description: "Home battery systems from ₦380,000. Solar + battery combos from ₦780,000. EcoFlow, Itel Energy, Felicity Solar. Genuine products, professionally installed." });
+  const { addToCart } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -178,11 +180,16 @@ const Products = () => {
                         )}
                       </div>
 
-                      <Link to="/contact">
-                        <Button variant={product.is_popular ? "amber" : "outline"} className="w-full" size="default">
-                          Enquire Now →
+                      <div className="flex gap-2">
+                        <Link to={`/products/${product.slug}`} className="flex-1">
+                          <Button variant={product.is_popular ? "amber" : "outline"} className="w-full" size="default">
+                            View Details →
+                          </Button>
+                        </Link>
+                        <Button variant="outline" size="default" onClick={() => addToCart(product.id)} className="px-3">
+                          <ShoppingCart className="w-4 h-4" />
                         </Button>
-                      </Link>
+                      </div>
                     </div>
                   </div>
                 </ScrollReveal>
