@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Shield, Brain, Handshake, Flag, Heart, MapPin } from "lucide-react";
 import familyImg from "@/assets/family-power.jpg";
+import useSEO from "@/hooks/useSEO";
 
 const values = [
   { icon: Shield, title: "Reliability", desc: "We do what we say, every time. Our installations are done right. Our products are genuine. Our support is real." },
@@ -13,10 +14,12 @@ const values = [
   { icon: Heart, title: "Care", desc: "After the sale is where our relationship begins. We show up. We follow up. We stand behind every system we install." },
 ];
 
-const About = () => (
-  <Layout>
+const About = () => {
+  useSEO({ title: "About PawaMore Systems — Nigeria's Most Trusted Energy Company", description: "PawaMore Systems was founded to make reliable, clean, affordable power accessible to every Nigerian home and business. Offices in Lagos, Abuja, and Ibadan." });
+  return (
+    <Layout>
     {/* Hero */}
-    <section className="relative py-20 md:py-28 overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
+    <section className="relative py-12 sm:py-16 md:py-28 overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
       <div className="absolute inset-0 kente-pattern opacity-20" />
       <div className="container relative z-10">
         <ScrollReveal>
@@ -114,6 +117,7 @@ const About = () => (
       </div>
     </section>
   </Layout>
-);
+  );
+};
 
 export default About;

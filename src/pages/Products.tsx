@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Battery, Sun, Zap, CheckCircle } from "lucide-react";
 import batteryImg from "@/assets/battery-system.jpg";
+import useSEO from "@/hooks/useSEO";
 
 const batteryProducts = [
   {
@@ -35,7 +36,9 @@ const solarCombos = [
 
 const brands = ["EcoFlow", "Itel Energy", "Felicity Solar", "Luminous", "Bluetti"];
 
-const Products = () => (
+const Products = () => {
+  useSEO({ title: "Solar Systems & Battery Products — PawaMore Systems Nigeria", description: "Home battery systems from ₦380,000. Solar + battery combos from ₦780,000. EcoFlow, Itel Energy, Felicity Solar. Genuine products, professionally installed." });
+  return (
   <Layout>
     {/* Hero */}
     <section className="relative py-20 md:py-28" style={{ background: "var(--gradient-hero)" }}>
@@ -166,6 +169,7 @@ const Products = () => (
       </div>
     </section>
   </Layout>
-);
+  );
+};
 
 export default Products;

@@ -3,6 +3,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import useSEO from "@/hooks/useSEO";
 
 const faqs = [
   { q: "How much does a solar system cost in Nigeria?", a: "Our systems start from ₦380,000 for a basic home battery setup, up to ₦5,000,000+ for a full commercial solar installation. The right price depends on your load, your home size, and your goals. That's why we offer a free power audit — to size the system correctly before quoting." },
@@ -17,7 +18,9 @@ const faqs = [
   { q: "Do you cover my city?", a: "We currently operate in Lagos, Oyo State (Ibadan), and Abuja, with nationwide product delivery available. If you're outside these areas, contact us — we're expanding." },
 ];
 
-const FAQs = () => (
+const FAQs = () => {
+  useSEO({ title: "Frequently Asked Questions — PawaMore Systems", description: "Answers to common questions about solar installation cost, battery lifespan, installation time, payment plans, and more. PawaMore Systems Nigeria." });
+  return (
   <Layout>
     <section className="relative py-20 md:py-28" style={{ background: "var(--gradient-hero)" }}>
       <div className="absolute inset-0 kente-pattern opacity-20" />
@@ -60,6 +63,7 @@ const FAQs = () => (
       </div>
     </section>
   </Layout>
-);
+  );
+};
 
 export default FAQs;

@@ -3,6 +3,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { CheckCircle, XCircle, Shield } from "lucide-react";
+import useSEO from "@/hooks/useSEO";
 
 const comparison = [
   { label: "After-sales support", market: "None — they disappear after payment", pawa: "7-day follow-up, 90-day guarantee, ongoing support" },
@@ -14,7 +15,9 @@ const comparison = [
   { label: "Expertise", market: "Generalist traders", pawa: "Energy systems specialists" },
 ];
 
-const WhyPawamore = () => (
+const WhyPawamore = () => {
+  useSEO({ title: "Why Choose PawaMore Systems? — Nigeria's Most Trusted Solar Installer", description: "90-day performance guarantee, free power audit, certified team, genuine products. See how PawaMore compares to the typical Nigerian energy market." });
+  return (
   <Layout>
     <section className="relative py-20 md:py-28" style={{ background: "var(--gradient-hero)" }}>
       <div className="absolute inset-0 kente-pattern opacity-20" />
@@ -96,6 +99,7 @@ const WhyPawamore = () => (
       </div>
     </section>
   </Layout>
-);
+  );
+};
 
 export default WhyPawamore;
