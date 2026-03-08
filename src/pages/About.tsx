@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Shield, Brain, Handshake, Flag, Heart, MapPin } from "lucide-react";
 import familyImg from "@/assets/family-power.jpg";
+import useSEO from "@/hooks/useSEO";
 
 const values = [
   { icon: Shield, title: "Reliability", desc: "We do what we say, every time. Our installations are done right. Our products are genuine. Our support is real." },
