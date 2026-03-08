@@ -4,6 +4,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Image as ImageIcon, ShoppingCart, Search } from "lucide-react";
+import QuickBuyButton from "@/components/QuickBuyButton";
 import { supabase } from "@/integrations/supabase/client";
 import useSEO from "@/hooks/useSEO";
 import { useCart } from "@/contexts/CartContext";
