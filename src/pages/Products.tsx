@@ -3,7 +3,7 @@ import Layout from "@/components/Layout";
 import ScrollReveal from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Battery, Sun, Zap, CheckCircle, Star, Image as ImageIcon, ShoppingCart } from "lucide-react";
+import { Battery, Sun, Zap, CheckCircle, Star, Image as ImageIcon, ShoppingCart, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import useSEO from "@/hooks/useSEO";
 import { useCart } from "@/contexts/CartContext";
@@ -29,39 +29,37 @@ interface Product {
   product_categories: { name: string; slug: string } | null;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-}
+const staticProducts = [
+  { icon: Battery, tag: "Entry Level", title: "Starter Battery System", desc: "Power your essentials — fridge, fans, TV, lights — all night. No solar needed. Plug and play.", price: "From ₦380,000", ideal: "Perfect for renters & apartments" },
+  { icon: Sun, tag: "Most Popular", title: "Standard Solar + Battery", desc: "Full day power from solar + battery backup for evening and night.", price: "From ₦780,000", ideal: "Best for 2–3 bedroom homes" },
+  { icon: Zap, tag: "Premium", title: "Premium Hybrid System", desc: "Total energy independence. Powers AC, washing machine, full home load.", price: "From ₦2,200,000", ideal: "Best for large homes & SMEs" },
+];
 
 const brands = ["EcoFlow", "Itel Energy", "Felicity Solar", "Luminous", "Bluetti"];
+const PRODUCTS_PREVIEW_LIMIT = 6;
 
 const Products = () => {
   useSEO({ title: "Solar Systems & Battery Products — PawaMore Systems Nigeria", description: "Home battery systems from ₦380,000. Solar + battery combos from ₦780,000. EcoFlow, Itel Energy, Felicity Solar. Genuine products, professionally installed." });
   const { addToCart } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchData = async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("*, product_images(image_url, is_primary), product_categories(name, slug)")
+        .eq("status", "active")
+        .order("is_featured", { ascending: false })
+        .order("is_popular", { ascending: false })
+        .limit(PRODUCTS_PREVIEW_LIMIT);
+      setProducts((data as any) || []);
+      setLoading(false);
+    };
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    const [prodResult, catResult] = await Promise.all([
-      supabase.from("products").select("*, product_images(image_url, is_primary), product_categories(name, slug)").eq("status", "active").order("is_featured", { ascending: false }).order("is_popular", { ascending: false }),
-      supabase.from("product_categories").select("*").order("sort_order"),
-    ]);
-    setProducts((prodResult.data as any) || []);
-    setCategories((catResult.data as any) || []);
-    setLoading(false);
-  };
-
-  const filteredProducts = activeCategory === "all" ? products : products.filter((p) => (p.product_categories as any)?.slug === activeCategory);
   const primaryImage = (p: Product) => p.product_images?.find((i) => i.is_primary)?.image_url || p.product_images?.[0]?.image_url;
 
   return (
@@ -83,119 +81,40 @@ const Products = () => {
         </div>
       </section>
 
-      {/* Category Filter */}
-      {categories.length > 0 && (
-        <section className="py-6 sm:py-8 border-b border-border">
-          <div className="container">
-            <div className="flex flex-wrap gap-2 justify-center">
-              <button onClick={() => setActiveCategory("all")}
-                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-display font-semibold transition-colors ${
-                  activeCategory === "all" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-primary/10"
-                }`}>
-                All Products
-              </button>
-              {categories.map((cat) => (
-                <button key={cat.id} onClick={() => setActiveCategory(cat.slug)}
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-display font-semibold transition-colors ${
-                    activeCategory === cat.slug ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-primary/10"
-                  }`}>
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Products Grid */}
+      {/* Static Product Tiers */}
       <section className="py-10 sm:py-16 md:py-20">
         <div className="container">
-          {loading ? (
-            <div className="text-center py-20 text-muted-foreground">Loading products...</div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground mb-4">No products available yet. Check back soon!</p>
-              <Link to="/contact"><Button variant="amber">Contact Us for a Quote →</Button></Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {filteredProducts.map((product) => (
-                <ScrollReveal key={product.id}>
-                  <div className={`rounded-xl sm:rounded-2xl overflow-hidden border-2 bg-card transition-all hover:shadow-[var(--shadow-elevated)] ${
-                    product.is_popular ? "border-accent" : "border-border"
-                  }`}>
-                    {/* Promo / Popular Banner */}
-                    {(product.promo_label || product.is_popular) && (
-                      <div className={`text-center py-1.5 font-display font-bold text-xs uppercase tracking-wider ${
-                        product.promo_label ? "bg-destructive text-destructive-foreground" : "bg-accent text-foreground"
-                      }`}>
-                        {product.promo_label || "⭐ Most Popular"}
-                      </div>
-                    )}
+          <ScrollReveal>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center mb-4">
+              Our Most Popular <span className="text-accent">Systems</span>
+            </h2>
+            <p className="text-muted-foreground text-center max-w-xl mx-auto mb-10">Choose a system that fits your power needs and budget</p>
+          </ScrollReveal>
 
-                    {/* Image */}
-                    <div className="aspect-video bg-secondary relative overflow-hidden">
-                      {primaryImage(product) ? (
-                        <img src={primaryImage(product)} alt={product.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ImageIcon className="w-10 h-10 text-muted-foreground/20" />
-                        </div>
-                      )}
-                      {product.is_featured && (
-                        <span className="absolute top-2 left-2 bg-accent text-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">Featured</span>
-                      )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            {staticProducts.map((product, i) => (
+              <ScrollReveal key={i} delay={i * 150}>
+                <div className={`relative rounded-2xl overflow-hidden border-2 transition-all duration-300 hover:shadow-[var(--shadow-elevated)] ${i === 1 ? "border-accent bg-card scale-[1.02]" : "border-border bg-card"}`}>
+                  {i === 1 && (
+                    <div className="bg-accent text-foreground text-center py-1.5 font-display font-bold text-xs uppercase tracking-wider">⭐ Most Popular</div>
+                  )}
+                  <div className="p-6 sm:p-8">
+                    <div className="inline-flex items-center gap-2 bg-secondary rounded-full px-3 py-1 mb-4">
+                      <product.icon className="w-4 h-4 text-primary" />
+                      <span className="text-xs font-display font-semibold text-primary">{product.tag}</span>
                     </div>
-
-                    <div className="p-4 sm:p-6">
-                      {(product.product_categories as any) && (
-                        <span className="text-[10px] sm:text-xs font-display font-semibold text-primary uppercase tracking-wider">
-                          {(product.product_categories as any).name}
-                        </span>
-                      )}
-                      <h3 className="font-display font-bold text-base sm:text-lg mt-1 mb-1 sm:mb-2">{product.name}</h3>
-                      <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed mb-3 line-clamp-2">
-                        {product.short_description || product.description || ""}
-                      </p>
-
-                      {product.powers && (
-                        <p className="text-xs text-muted-foreground bg-secondary rounded-lg p-2 mb-3">
-                          <strong>Powers:</strong> {product.powers}
-                        </p>
-                      )}
-
-                      <div className="flex items-end justify-between mb-3 sm:mb-4">
-                        <div>
-                          {product.discount_price ? (
-                            <div>
-                              <span className="font-display font-extrabold text-lg sm:text-xl text-primary">₦{Number(product.discount_price).toLocaleString()}</span>
-                              <span className="text-muted-foreground text-xs line-through ml-2">₦{Number(product.price).toLocaleString()}</span>
-                            </div>
-                          ) : (
-                            <span className="font-display font-extrabold text-lg sm:text-xl text-primary">₦{Number(product.price).toLocaleString()}</span>
-                          )}
-                        </div>
-                        {product.ideal_for && (
-                          <span className="text-[10px] sm:text-xs text-accent font-semibold">{product.ideal_for}</span>
-                        )}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Link to={`/products/${product.slug}`} className="flex-1">
-                          <Button variant={product.is_popular ? "amber" : "outline"} className="w-full" size="default">
-                            View Details →
-                          </Button>
-                        </Link>
-                        <Button variant="outline" size="default" onClick={() => addToCart(product.id)} className="px-3">
-                          <ShoppingCart className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    <h3 className="font-display font-bold text-xl mb-3">{product.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-6">{product.desc}</p>
+                    <div className="font-display font-extrabold text-2xl text-primary mb-1">{product.price}</div>
+                    <div className="text-sm text-muted-foreground mb-6">{product.ideal}</div>
+                    <Link to="/contact">
+                      <Button variant={i === 1 ? "amber" : "outline"} className="w-full">Get a Quote →</Button>
+                    </Link>
                   </div>
-                </ScrollReveal>
-              ))}
-            </div>
-          )}
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -215,6 +134,95 @@ const Products = () => {
               All products are sourced from authorised Nigerian distributors with manufacturer warranty plus PawaMore's 90-day installation guarantee.
             </p>
           </ScrollReveal>
+        </div>
+      </section>
+
+      {/* DB Products - Shop Section */}
+      <section className="py-10 sm:py-16 md:py-20 bg-secondary">
+        <div className="container">
+          <ScrollReveal>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center mb-3">
+              Shop Our <span className="text-accent">Products</span>
+            </h2>
+            <p className="text-muted-foreground text-center max-w-xl mx-auto mb-8 sm:mb-10">
+              Browse our latest products available for purchase with delivery across Nigeria
+            </p>
+          </ScrollReveal>
+
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading products...</div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">Products coming soon! Contact us for a custom quote.</p>
+              <Link to="/contact"><Button variant="amber">Contact Us →</Button></Link>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {products.map((product) => (
+                  <ScrollReveal key={product.id}>
+                    <div className={`rounded-xl sm:rounded-2xl overflow-hidden border-2 bg-card transition-all hover:shadow-[var(--shadow-elevated)] ${product.is_popular ? "border-accent" : "border-border"}`}>
+                      {(product.promo_label || product.is_popular) && (
+                        <div className={`text-center py-1.5 font-display font-bold text-xs uppercase tracking-wider ${product.promo_label ? "bg-destructive text-destructive-foreground" : "bg-accent text-foreground"}`}>
+                          {product.promo_label || "⭐ Most Popular"}
+                        </div>
+                      )}
+                      <div className="aspect-video bg-secondary relative overflow-hidden">
+                        {primaryImage(product) ? (
+                          <img src={primaryImage(product)} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/20" /></div>
+                        )}
+                        {product.is_featured && (
+                          <span className="absolute top-2 left-2 bg-accent text-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">Featured</span>
+                        )}
+                      </div>
+                      <div className="p-4 sm:p-6">
+                        {(product.product_categories as any) && (
+                          <span className="text-[10px] sm:text-xs font-display font-semibold text-primary uppercase tracking-wider">
+                            {(product.product_categories as any).name}
+                          </span>
+                        )}
+                        <h3 className="font-display font-bold text-base sm:text-lg mt-1 mb-1 sm:mb-2">{product.name}</h3>
+                        <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed mb-3 line-clamp-2">
+                          {product.short_description || product.description || ""}
+                        </p>
+                        <div className="flex items-end justify-between mb-3 sm:mb-4">
+                          <div>
+                            {product.discount_price ? (
+                              <div>
+                                <span className="font-display font-extrabold text-lg sm:text-xl text-primary">₦{Number(product.discount_price).toLocaleString()}</span>
+                                <span className="text-muted-foreground text-xs line-through ml-2">₦{Number(product.price).toLocaleString()}</span>
+                              </div>
+                            ) : (
+                              <span className="font-display font-extrabold text-lg sm:text-xl text-primary">₦{Number(product.price).toLocaleString()}</span>
+                            )}
+                          </div>
+                          {product.ideal_for && <span className="text-[10px] sm:text-xs text-accent font-semibold">{product.ideal_for}</span>}
+                        </div>
+                        <div className="flex gap-2">
+                          <Link to={`/products/${product.slug}`} className="flex-1">
+                            <Button variant={product.is_popular ? "amber" : "outline"} className="w-full" size="default">View Details →</Button>
+                          </Link>
+                          <Button variant="outline" size="default" onClick={() => addToCart(product.id)} className="px-3">
+                            <ShoppingCart className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </ScrollReveal>
+                ))}
+              </div>
+
+              <div className="text-center mt-8 sm:mt-10">
+                <Link to="/shop">
+                  <Button variant="default" size="lg" className="gap-2">
+                    Browse All Products <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
