@@ -15,7 +15,9 @@ const comparison = [
   { label: "Expertise", market: "Generalist traders", pawa: "Energy systems specialists" },
 ];
 
-const WhyPawamore = () => (
+const WhyPawamore = () => {
+  useSEO({ title: "Why Choose PawaMore Systems? — Nigeria's Most Trusted Solar Installer", description: "90-day performance guarantee, free power audit, certified team, genuine products. See how PawaMore compares to the typical Nigerian energy market." });
+  return (
   <Layout>
     <section className="relative py-20 md:py-28" style={{ background: "var(--gradient-hero)" }}>
       <div className="absolute inset-0 kente-pattern opacity-20" />

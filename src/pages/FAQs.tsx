@@ -18,7 +18,9 @@ const faqs = [
   { q: "Do you cover my city?", a: "We currently operate in Lagos, Oyo State (Ibadan), and Abuja, with nationwide product delivery available. If you're outside these areas, contact us — we're expanding." },
 ];
 
-const FAQs = () => (
+const FAQs = () => {
+  useSEO({ title: "Frequently Asked Questions — PawaMore Systems", description: "Answers to common questions about solar installation cost, battery lifespan, installation time, payment plans, and more. PawaMore Systems Nigeria." });
+  return (
   <Layout>
     <section className="relative py-20 md:py-28" style={{ background: "var(--gradient-hero)" }}>
       <div className="absolute inset-0 kente-pattern opacity-20" />

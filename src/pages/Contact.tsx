@@ -6,6 +6,7 @@ import { useState } from "react";
 import useSEO from "@/hooks/useSEO";
 
 const Contact = () => {
+  useSEO({ title: "Contact PawaMore Systems — Solar Installation Enquiries", description: "Reach PawaMore Systems via WhatsApp, phone, or email. Offices in Lagos, Ibadan, and Abuja. Book your free power audit today." });
   const [formData, setFormData] = useState({
     name: "", phone: "", email: "", city: "", interest: "", message: "",
   });
