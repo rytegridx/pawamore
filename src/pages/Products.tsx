@@ -180,11 +180,16 @@ const Products = () => {
                         )}
                       </div>
 
-                      <Link to="/contact">
-                        <Button variant={product.is_popular ? "amber" : "outline"} className="w-full" size="default">
-                          Enquire Now →
+                      <div className="flex gap-2">
+                        <Link to={`/products/${product.slug}`} className="flex-1">
+                          <Button variant={product.is_popular ? "amber" : "outline"} className="w-full" size="default">
+                            View Details →
+                          </Button>
+                        </Link>
+                        <Button variant="outline" size="default" onClick={() => addToCart(product.id)} className="px-3">
+                          <ShoppingCart className="w-4 h-4" />
                         </Button>
-                      </Link>
+                      </div>
                     </div>
                   </div>
                 </ScrollReveal>
