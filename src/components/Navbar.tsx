@@ -49,6 +49,12 @@ const Navbar = () => {
 
         {/* Desktop CTA / Auth */}
         <div className="hidden lg:flex items-center gap-2">
+          <Link to="/cart" className="relative text-primary-foreground/80 hover:text-accent p-2">
+            <ShoppingCart className="w-5 h-5" />
+            {itemCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-accent text-foreground text-[10px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center">{itemCount}</span>
+            )}
+          </Link>
           {user ? (
             <>
               {isAdmin && (
@@ -58,6 +64,11 @@ const Navbar = () => {
                   </Button>
                 </Link>
               )}
+              <Link to="/orders">
+                <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-accent">
+                  <User className="w-4 h-4 mr-1" /> Orders
+                </Button>
+              </Link>
               <Button variant="ghost" size="sm" onClick={signOut} className="text-primary-foreground/80 hover:text-accent">
                 <LogOut className="w-4 h-4 mr-1" /> Logout
               </Button>
