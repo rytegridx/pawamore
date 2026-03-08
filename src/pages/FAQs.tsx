@@ -3,6 +3,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import useSEO from "@/hooks/useSEO";
 
 const faqs = [
   { q: "How much does a solar system cost in Nigeria?", a: "Our systems start from ₦380,000 for a basic home battery setup, up to ₦5,000,000+ for a full commercial solar installation. The right price depends on your load, your home size, and your goals. That's why we offer a free power audit — to size the system correctly before quoting." },

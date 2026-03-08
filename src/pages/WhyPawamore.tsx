@@ -3,6 +3,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { CheckCircle, XCircle, Shield } from "lucide-react";
+import useSEO from "@/hooks/useSEO";
 
 const comparison = [
   { label: "After-sales support", market: "None — they disappear after payment", pawa: "7-day follow-up, 90-day guarantee, ongoing support" },

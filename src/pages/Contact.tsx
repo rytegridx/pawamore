@@ -3,6 +3,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, MessageCircle, MapPin } from "lucide-react";
 import { useState } from "react";
+import useSEO from "@/hooks/useSEO";
 
 const Contact = () => {
   const [formData, setFormData] = useState({

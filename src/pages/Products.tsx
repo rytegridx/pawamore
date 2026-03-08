@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Battery, Sun, Zap, CheckCircle } from "lucide-react";
 import batteryImg from "@/assets/battery-system.jpg";
+import useSEO from "@/hooks/useSEO";
 
 const batteryProducts = [
   {

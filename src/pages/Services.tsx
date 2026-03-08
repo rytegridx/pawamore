@@ -3,6 +3,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ClipboardCheck, Sun, Battery, Cpu, Package, HeartHandshake } from "lucide-react";
+import useSEO from "@/hooks/useSEO";
 
 const services = [
   {
