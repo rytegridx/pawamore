@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import useSEO from "@/hooks/useSEO";
 import { useCart } from "@/contexts/CartContext";
 import batteryImg from "@/assets/battery-system.jpg";
+import heroImg from "@/assets/hero-install.jpg";
 
 interface Product {
   id: string;
