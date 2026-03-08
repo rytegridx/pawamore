@@ -10,6 +10,7 @@ import Services from "./pages/Services";
 import Products from "./pages/Products";
 import WhyPawamore from "./pages/WhyPawamore";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import FAQs from "./pages/FAQs";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -24,13 +25,6 @@ const ScrollToTop = () => {
   return null;
 };
 
-const PageWrapper = ({ children, title }: { children: React.ReactNode; title: string }) => {
-  useEffect(() => {
-    document.title = title;
-  }, [title]);
-  return <>{children}<ScrollToTop /></>;
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -39,14 +33,15 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
-          <Route path="/" element={<PageWrapper title="PawaMore Systems — Solar & Battery Installation Nigeria"><Index /></PageWrapper>} />
-          <Route path="/about" element={<PageWrapper title="About PawaMore Systems — Nigeria's Most Trusted Energy Company"><About /></PageWrapper>} />
-          <Route path="/services" element={<PageWrapper title="Solar & Battery Installation Services — PawaMore Systems"><Services /></PageWrapper>} />
-          <Route path="/products" element={<PageWrapper title="Solar Systems & Battery Products — PawaMore Systems Nigeria"><Products /></PageWrapper>} />
-          <Route path="/why-pawamore" element={<PageWrapper title="Why Choose PawaMore Systems? — Nigeria's Most Trusted Solar Installer"><WhyPawamore /></PageWrapper>} />
-          <Route path="/blog" element={<PageWrapper title="Energy Tips & Solar Guides — PawaMore Systems Blog"><Blog /></PageWrapper>} />
-          <Route path="/faqs" element={<PageWrapper title="Frequently Asked Questions — PawaMore Systems"><FAQs /></PageWrapper>} />
-          <Route path="/contact" element={<PageWrapper title="Contact PawaMore Systems — Solar Installation Enquiries"><Contact /></PageWrapper>} />
+          <Route path="/" element={<Index />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/why-pawamore" element={<WhyPawamore />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/faqs" element={<FAQs />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
