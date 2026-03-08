@@ -76,7 +76,9 @@ const services = [
   },
 ];
 
-const Services = () => (
+const Services = () => {
+  useSEO({ title: "Solar & Battery Installation Services — PawaMore Systems", description: "From free power audits to full turnkey installation and after-sales support. PawaMore designs, installs, and maintains solar and battery systems across Nigeria." });
+  return (
   <Layout>
     {/* Hero */}
     <section className="relative py-20 md:py-28" style={{ background: "var(--gradient-hero)" }}>
