@@ -17,7 +17,7 @@ const values = [
 const About = () => {
   useSEO({ title: "About PawaMore Systems — Nigeria's Most Trusted Energy Company", description: "PawaMore Systems was founded to make reliable, clean, affordable power accessible to every Nigerian home and business. Offices in Lagos, Abuja, and Ibadan." });
   return (
-    {/* Hero */}
+    <Layout>
     <section className="relative py-20 md:py-28 overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
       <div className="absolute inset-0 kente-pattern opacity-20" />
       <div className="container relative z-10">
