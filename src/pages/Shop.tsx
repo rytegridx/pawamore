@@ -89,28 +89,28 @@ const Shop = () => {
 
       {/* Search + Filter */}
       <section className="py-3 sm:py-4 lg:py-6 border-b border-border sticky top-14 xs:top-16 md:top-20 z-40 bg-background/95 backdrop-blur-sm">
-        <div className="container">
-          <div className="flex flex-col sm:flex-row gap-3 items-center">
+        <div className="container px-4 sm:px-6">
+          <div className="flex flex-col gap-3 items-stretch">
             {/* Search */}
-            <div className="relative w-full sm:w-72">
+            <div className="relative w-full max-w-md mx-auto sm:mx-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full pl-9 pr-4 py-3 rounded-lg border border-input bg-background text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px]"
               />
             </div>
             {/* Categories */}
-            <div className="flex flex-wrap gap-2 flex-1 justify-center sm:justify-start">
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
               <button onClick={() => setActiveCategory("all")}
-                className={`px-3 py-1.5 rounded-full text-xs font-display font-semibold transition-colors ${activeCategory === "all" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-primary/10"}`}>
+                className={`px-3 py-2 rounded-full text-xs sm:text-sm font-display font-semibold transition-colors min-h-[36px] ${activeCategory === "all" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-primary/10"}`}>
                 All
               </button>
               {categories.map((cat) => (
                 <button key={cat.id} onClick={() => setActiveCategory(cat.slug)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-display font-semibold transition-colors ${activeCategory === cat.slug ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-primary/10"}`}>
+                  className={`px-3 py-2 rounded-full text-xs sm:text-sm font-display font-semibold transition-colors min-h-[36px] ${activeCategory === cat.slug ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-primary/10"}`}>
                   {cat.name}
                 </button>
               ))}
