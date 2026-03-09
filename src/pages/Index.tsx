@@ -291,11 +291,11 @@ const Index = () => {
             </h2>
           </ScrollReveal>
 
-          <div className="mt-8 sm:mt-12 -mx-6 px-6 sm:mx-0 sm:px-0">
-            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:gap-8 sm:overflow-visible sm:pb-0 scrollbar-hide">
+          <div className="mt-8 sm:mt-12 sm:grid sm:grid-cols-3 sm:gap-8">
+            <MobileScrollSection showSwipeHint={true} showDots={true} showArrows={true}>
               {testimonials.map((t, i) => (
                 <ScrollReveal key={i} delay={i * 150}>
-                  <div className="bg-primary-foreground/5 backdrop-blur-sm border border-primary-foreground/10 rounded-2xl p-5 sm:p-8 min-w-[280px] snap-center sm:min-w-0">
+                  <div className="bg-primary-foreground/5 backdrop-blur-sm border border-primary-foreground/10 rounded-2xl p-5 sm:p-8 h-full">
                     <div className="flex gap-0.5 mb-3 sm:mb-4">
                       {Array(5).fill(0).map((_, j) => (
                         <Star key={j} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-accent text-accent" />
@@ -311,7 +311,7 @@ const Index = () => {
                   </div>
                 </ScrollReveal>
               ))}
-            </div>
+            </MobileScrollSection>
           </div>
         </div>
       </section>
