@@ -80,17 +80,15 @@ const Navbar = () => {
                 <LogOut className="w-4 h-4 mr-1" /> Logout
               </Button>
             </>
-          ) : (
-            <Link to="/login">
-              <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-accent">
-                <User className="w-4 h-4 mr-1" /> Login
-              </Button>
-            </Link>
-          )}
-          <Link to="/contact">
-            <Button variant="amber" size="default">Book Free Power Audit →</Button>
-          </Link>
-        </div>
+           ) : (
+            <Button variant="ghost" size="sm" onClick={handleLoginClick} className="text-primary-foreground/80 hover:text-accent">
+              <User className="w-4 h-4 mr-1" /> Login
+            </Button>
+           )}
+           <Link to="/contact">
+             <Button variant="amber" size="default">Book Free Power Audit →</Button>
+           </Link>
+         </div>
 
         {/* Mobile toggle */}
         <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-primary-foreground p-2" aria-label="Toggle menu">
