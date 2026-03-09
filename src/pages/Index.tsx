@@ -121,6 +121,7 @@ const stats = [
 
 const heroImages = [
   { src: heroImg, alt: "Solar installation on Nigerian home" },
+  { src: heroFamilyHome, alt: "Nigerian family enjoying uninterrupted power at home" },
   { src: heroBusinessPower, alt: "Nigerian business office powered reliably" },
 ];
 
