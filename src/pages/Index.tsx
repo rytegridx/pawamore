@@ -211,7 +211,7 @@ const Index = () => {
 
           {/* Mobile: horizontal scroll strip */}
           <div className="mt-8 sm:mt-12 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-8">
-            <MobileScrollSection showSwipeHint={true} showDots={true} showArrows={false}>
+            <MobileScrollSection showSwipeHint={true} showDots={true} showArrows={false} indicatorStyle="dots">
               {steps.map((step, i) => (
                 <ScrollReveal key={i} delay={i * 100}>
                   <div className="relative text-center group">
