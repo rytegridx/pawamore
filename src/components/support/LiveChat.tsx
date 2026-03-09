@@ -48,7 +48,7 @@ const LiveChat = () => {
       setMessages([{
         id: "welcome",
         role: "assistant",
-        content: "👋 Hi there! I'm PawaMore's virtual assistant. How can I help you today?\n\nI can answer questions about:\n- Our solar products and power solutions\n- Order status and delivery\n- Installation services\n- Returns and support",
+        content: "👋 Welcome to PawaMore! I'm here to help you take control of your electricity.\n\nWhether you're looking to **escape the frustration of constant power cuts** or you want to start **turning your electricity bills into an investment that pays you back** — I've got you covered.\n\nHow can I help you today?\n- 💡 Find the right solar or battery solution for your home/business\n- 📦 Track an order or check delivery status\n- 🔧 Learn about installation & maintenance\n- 💰 Calculate how much you could save with solar",
         timestamp: new Date(),
       }]);
     }
