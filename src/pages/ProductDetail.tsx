@@ -115,7 +115,7 @@ const ProductDetail = () => {
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Products
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
           {/* Images */}
           <div>
             <div className="aspect-square bg-secondary rounded-2xl overflow-hidden mb-3">
