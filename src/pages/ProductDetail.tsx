@@ -208,9 +208,20 @@ const ProductDetail = () => {
             )}
           </div>
         </div>
-      </div>
-    </Layout>
-  );
-};
+          {/* Reviews Section */}
+          <div className="col-span-2">
+            <ProductReviews
+              productId={product.id}
+              productName={product.name}
+              reviews={reviews}
+              averageRating={reviewStats.average}
+              totalReviews={reviewStats.total}
+              onReviewAdded={() => fetchReviews(product.id)}
+            />
+          </div>
+        </div>
+      </Layout>
+    );
+  };
 
 export default ProductDetail;
