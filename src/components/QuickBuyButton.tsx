@@ -50,13 +50,6 @@ const QuickBuyButton = ({ product, size = "default", className = "" }: QuickBuyB
   const unitPrice = product.discount_price || product.price;
 
   const handleQuickBuy = () => {
-    if (!user) {
-      // Save current page so we can return after login
-      sessionStorage.setItem("intendedPath", window.location.pathname + window.location.search);
-      toast({ title: "Please log in first", variant: "destructive" });
-      navigate("/login");
-      return;
-    }
     setOpen(true);
   };
 
