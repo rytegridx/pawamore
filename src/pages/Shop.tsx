@@ -120,15 +120,15 @@ const Shop = () => {
       </section>
 
       {/* Products Grid */}
-      <section className="py-8 sm:py-12">
-        <div className="container">
-          <p className="text-sm text-muted-foreground mb-6">{filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""} found</p>
+      <section className="py-6 sm:py-8 lg:py-12">
+        <div className="container px-4 sm:px-6">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">{filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""} found</p>
 
           {loading ? (
-            <div className="text-center py-20 text-muted-foreground">Loading products...</div>
+            <div className="text-center py-12 sm:py-20 text-muted-foreground text-sm sm:text-base">Loading products...</div>
           ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground mb-4">No products found. Try a different search or category.</p>
+            <div className="text-center py-12 sm:py-20">
+              <p className="text-muted-foreground mb-4 text-sm sm:text-base px-4">No products found. Try a different search or category.</p>
               <Button variant="outline" onClick={() => { setSearchQuery(""); setActiveCategory("all"); }}>Clear Filters</Button>
             </div>
           ) : (
