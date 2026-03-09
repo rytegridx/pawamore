@@ -4,7 +4,9 @@ import ScrollReveal from "@/components/ScrollReveal";
 import MobileScrollSection from "@/components/MobileScrollSection";
 import Layout from "@/components/Layout";
 import { Fuel, Volume2, Clock, ClipboardCheck, Settings, Wrench, HeartHandshake, Shield, CheckCircle, Star, ChevronRight, Zap, Battery, Sun, ArrowRight, Phone } from "lucide-react";
+import { useState, useEffect } from "react";
 import heroImg from "@/assets/hero-install.jpg";
+import heroSolarRoof from "@/assets/hero-solar-roof.jpg";
 import familyImg from "@/assets/family-power.jpg";
 import useSEO from "@/hooks/useSEO";
 import batteryImg from "@/assets/battery-system.jpg";
@@ -116,7 +118,21 @@ const stats = [
   { value: "₦0", label: "Fuel Bills" },
 ];
 
+const heroImages = [
+  { src: heroImg, alt: "Solar installation on Nigerian home" },
+  { src: heroSolarRoof, alt: "Solar panels on Nigerian rooftop at sunset" },
+];
+
 const Index = () => {
+  const [activeHero, setActiveHero] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveHero((prev) => (prev + 1) % heroImages.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
   useSEO({
     title: "PawaMore Systems — Solar & Battery Installation Nigeria",
     description: "PawaMore Systems installs world-class solar panels and battery storage for Nigerian homes and businesses. Free power audit. 90-day guarantee. Lagos, Abuja, Ibadan.",
@@ -126,16 +142,22 @@ const Index = () => {
     <Layout>
       {/* Hero Section — Mobile-first: full-bleed image behind, text on top */}
       <section className="relative min-h-[100svh] flex items-end sm:items-center overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
-        {/* Background image — full on mobile, clipped on desktop */}
+        {/* Background images — crossfading carousel */}
         <div className="absolute inset-0 lg:left-[40%] overflow-hidden">
-          <div className="absolute inset-0 lg:hidden">
-            <img src={heroImg} alt="Solar installation on Nigerian home" className="w-full h-full object-cover" loading="eager" />
-            <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/80 to-forest/30" />
-          </div>
-          <div className="hidden lg:block absolute inset-0" style={{ clipPath: "polygon(15% 0, 100% 0, 100% 100%, 0% 100%)" }}>
-            <img src={heroImg} alt="Solar installation on Nigerian home" className="w-full h-full object-cover" loading="eager" />
-            <div className="absolute inset-0 bg-gradient-to-r from-forest via-forest/60 to-transparent" />
-          </div>
+          {heroImages.map((img, i) => (
+            <div key={i} className="absolute inset-0 transition-opacity duration-1500 ease-in-out" style={{ opacity: i === activeHero ? 1 : 0 }}>
+              {/* Mobile */}
+              <div className="absolute inset-0 lg:hidden">
+                <img src={img.src} alt={img.alt} className="w-full h-full object-cover" loading={i === 0 ? "eager" : "lazy"} />
+                <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/80 to-forest/30" />
+              </div>
+              {/* Desktop — clipped panel */}
+              <div className="hidden lg:block absolute inset-0" style={{ clipPath: "polygon(15% 0, 100% 0, 100% 100%, 0% 100%)" }}>
+                <img src={img.src} alt={img.alt} className="w-full h-full object-cover" loading={i === 0 ? "eager" : "lazy"} />
+                <div className="absolute inset-0 bg-gradient-to-r from-forest via-forest/60 to-transparent" />
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Kente pattern overlay */}
@@ -354,7 +376,7 @@ const Index = () => {
       {/* Why PawaMore Trust */}
       <section className="py-12 sm:py-20 md:py-28 bg-primary diagonal-top -mt-6 sm:-mt-8 pt-20 sm:pt-28 pb-16 sm:pb-24 relative overflow-hidden">
         {/* Floating mascot — eco plug */}
-        <img src={mascotEco} alt="" aria-hidden="true" className="absolute right-8 sm:right-16 md:right-24 lg:right-32 top-28 sm:top-32 w-20 sm:w-28 md:w-36 opacity-60 pointer-events-none select-none" />
+        <img src={mascotEco} alt="" aria-hidden="true" className="absolute right-8 sm:right-16 md:right-24 lg:right-32 top-28 sm:top-32 w-20 sm:w-28 md:w-36 opacity-100 pointer-events-none select-none" />
         <div className="container relative z-10">
           <ScrollReveal>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center text-primary-foreground mb-8 sm:mb-12">
