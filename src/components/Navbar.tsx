@@ -123,9 +123,6 @@ const Navbar = () => {
 
               {/* Auth links mobile */}
               <div className="border-t border-primary-foreground/10 mt-2 pt-2">
-                <Link to="/cart" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg text-base font-medium text-primary-foreground/80 hover:bg-primary/20">
-                  <ShoppingCart className="w-4 h-4 inline mr-2" /> Cart {itemCount > 0 && `(${itemCount})`}
-                </Link>
                 {user ? (
                   <>
                     {isAdmin && (
