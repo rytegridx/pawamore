@@ -42,10 +42,10 @@ const Login = () => {
 
             <form onSubmit={handleLogin} className="space-y-4">
               <input type="email" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px]" />
               <input type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-              <Button type="submit" variant="amber" className="w-full" size="lg" disabled={loading}>
+                className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px]" />
+              <Button type="submit" variant="amber" className="w-full min-h-[44px] sm:min-h-[48px]" size="lg" disabled={loading}>
                 {loading ? "Logging in..." : "Log In →"}
               </Button>
             </form>
