@@ -149,9 +149,9 @@ const Checkout = () => {
 
   return (
     <Layout>
-      <div className="container py-8 sm:py-12 max-w-3xl">
-        <h1 className="text-2xl sm:text-3xl font-extrabold mb-6">Checkout</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="container py-6 sm:py-8 lg:py-12 max-w-3xl px-4 sm:px-6">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold mb-4 sm:mb-6 text-center">Checkout</h1>
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div className="bg-card border border-border rounded-xl p-6">
             <h2 className="font-display font-bold text-lg mb-4">Delivery Details</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
