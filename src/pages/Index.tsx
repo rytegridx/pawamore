@@ -14,6 +14,11 @@ import avatarChidi from "@/assets/avatar-chidi.jpg";
 import avatarTunde from "@/assets/avatar-tunde.jpg";
 import avatarAlhaji from "@/assets/avatar-alhaji.jpg";
 import avatarNgozi from "@/assets/avatar-ngozi.jpg";
+import mascotBattery from "@/assets/mascot-battery.png";
+import mascotSun from "@/assets/mascot-sun.png";
+import mascotBolt from "@/assets/mascot-bolt.png";
+import mascotHouse from "@/assets/mascot-house.png";
+import mascotEco from "@/assets/mascot-eco.png";
 
 const painPoints = [
   {
@@ -188,8 +193,10 @@ const Index = () => {
       </section>
 
       {/* Pain Section — card-based on mobile */}
-      <section className="py-12 sm:py-20 md:py-28 kente-pattern">
-        <div className="container">
+      <section className="py-12 sm:py-20 md:py-28 kente-pattern relative overflow-hidden">
+        {/* Floating mascot — battery buddy */}
+        <img src={mascotBattery} alt="" aria-hidden="true" className="absolute -right-6 top-4 sm:right-4 sm:top-8 w-20 sm:w-28 md:w-36 opacity-[0.15] sm:opacity-20 animate-float pointer-events-none select-none" />
+        <div className="container relative z-10">
           <ScrollReveal>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-3 sm:mb-4 px-2">
               We Know How This <span className="text-accent">Feels.</span>
@@ -222,8 +229,10 @@ const Index = () => {
       </section>
 
       {/* How It Works — horizontal scroll on mobile */}
-      <section className="py-12 sm:py-20 md:py-28 bg-secondary diagonal-top -mt-6 sm:-mt-8 pt-20 sm:pt-28">
-        <div className="container">
+      <section className="py-12 sm:py-20 md:py-28 bg-secondary diagonal-top -mt-6 sm:-mt-8 pt-20 sm:pt-28 relative overflow-hidden">
+        {/* Floating mascot — sun buddy */}
+        <img src={mascotSun} alt="" aria-hidden="true" className="absolute -left-4 bottom-8 sm:left-4 sm:bottom-12 w-16 sm:w-24 md:w-32 opacity-[0.15] sm:opacity-20 animate-float pointer-events-none select-none" style={{ animationDelay: '1s' }} />
+        <div className="container relative z-10">
           <ScrollReveal>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-3 sm:mb-4">
               How It Works — <span className="text-primary">4 Steps</span>
@@ -256,8 +265,11 @@ const Index = () => {
       </section>
 
       {/* Products Preview — swipeable cards on mobile */}
-      <section className="py-12 sm:py-20 md:py-28">
-        <div className="container">
+      <section className="py-12 sm:py-20 md:py-28 relative overflow-hidden">
+        {/* Floating mascot — house with solar */}
+        <img src={mascotHouse} alt="" aria-hidden="true" className="absolute -left-4 top-12 sm:left-6 sm:top-16 w-20 sm:w-28 md:w-36 opacity-[0.12] sm:opacity-[0.18] animate-float pointer-events-none select-none" style={{ animationDelay: '0.5s' }} />
+        <img src={mascotBolt} alt="" aria-hidden="true" className="absolute -right-4 bottom-16 sm:right-6 sm:bottom-20 w-16 sm:w-24 md:w-28 opacity-[0.12] sm:opacity-[0.18] animate-float pointer-events-none select-none" style={{ animationDelay: '2s' }} />
+        <div className="container relative z-10">
           <ScrollReveal>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-3 sm:mb-4">
               Our Popular <span className="text-accent">Systems</span>
@@ -347,8 +359,10 @@ const Index = () => {
       </section>
 
       {/* Why PawaMore Trust */}
-      <section className="py-12 sm:py-20 md:py-28 bg-primary diagonal-top -mt-6 sm:-mt-8 pt-20 sm:pt-28 pb-16 sm:pb-24">
-        <div className="container">
+      <section className="py-12 sm:py-20 md:py-28 bg-primary diagonal-top -mt-6 sm:-mt-8 pt-20 sm:pt-28 pb-16 sm:pb-24 relative overflow-hidden">
+        {/* Floating mascot — eco plug */}
+        <img src={mascotEco} alt="" aria-hidden="true" className="absolute -right-4 top-20 sm:right-8 sm:top-24 w-20 sm:w-28 md:w-36 opacity-[0.1] sm:opacity-[0.15] animate-float pointer-events-none select-none" style={{ animationDelay: '1.5s' }} />
+        <div className="container relative z-10">
           <ScrollReveal>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center text-primary-foreground mb-8 sm:mb-12">
               Why <span className="text-accent">PawaMore?</span>
