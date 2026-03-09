@@ -33,12 +33,12 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-forest/95 backdrop-blur-md">
       <div className="kente-strip" />
-      <div className="container flex items-center justify-between h-16 md:h-20">
-        <Link to="/" className="flex items-center gap-3 group">
-          <img src={logo} alt="PawaMore Systems" className="h-10 w-auto rounded-lg group-hover:scale-110 transition-transform" />
-          <div className="flex flex-col hidden sm:block">
-            <span className="font-display font-extrabold text-lg text-primary-foreground tracking-tight leading-none">PawaMore</span>
-            <span className="font-display text-[10px] text-primary-foreground/60 uppercase tracking-[0.2em]">Systems Ltd</span>
+      <div className="container flex items-center justify-between h-14 sm:h-16 md:h-20 px-4 sm:px-6">
+        <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
+          <img src={logo} alt="PawaMore Systems" className="h-8 sm:h-10 w-auto rounded-lg group-hover:scale-110 transition-transform" />
+          <div className="flex flex-col hidden xs:block">
+            <span className="font-display font-extrabold text-base sm:text-lg text-primary-foreground tracking-tight leading-none">PawaMore</span>
+            <span className="font-display text-[9px] sm:text-[10px] text-primary-foreground/60 uppercase tracking-[0.2em]">Systems Ltd</span>
           </div>
         </Link>
 
