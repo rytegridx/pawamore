@@ -118,7 +118,24 @@ const Checkout = () => {
       </Layout>
     );
   }
-  if (items.length === 0) return <Layout><div className="min-h-[60vh] flex flex-col items-center justify-center gap-4"><ShoppingCart className="w-12 h-12 text-muted-foreground/30" /><p className="text-muted-foreground">Your cart is empty.</p><Link to="/products"><Button variant="amber">Browse Products</Button></Link></div></Layout>;
+  
+  // Show empty cart state
+  if (items.length === 0) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+          <ShoppingCart className="w-16 h-16 text-muted-foreground/30" />
+          <h2 className="text-xl font-bold">Your cart is empty</h2>
+          <p className="text-muted-foreground max-w-sm">
+            Add some products to your cart before proceeding to checkout.
+          </p>
+          <Link to="/products">
+            <Button variant="amber" size="lg">Browse Products</Button>
+          </Link>
+        </div>
+      </Layout>
+    );
+  }
 
   const createOrder = async () => {
     const { data: order, error } = await supabase.from("orders").insert({
