@@ -62,6 +62,11 @@ const Navbar = () => {
               <span className="absolute -top-0.5 -right-0.5 bg-accent text-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{itemCount}</span>
             )}
           </Link>
+          {user && (
+            <Link to="/wishlist" className="text-primary-foreground/80 hover:text-accent p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
+              <Heart className="w-5 h-5" />
+            </Link>
+          )}
           {user ? (
             <>
               {isAdmin && (
@@ -71,6 +76,11 @@ const Navbar = () => {
                   </Button>
                 </Link>
               )}
+              <Link to="/profile">
+                <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-accent">
+                  <Settings className="w-4 h-4 mr-1" /> Profile
+                </Button>
+              </Link>
               <Link to="/orders">
                 <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-accent">
                   <User className="w-4 h-4 mr-1" /> Orders
