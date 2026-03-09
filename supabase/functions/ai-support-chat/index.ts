@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       content: message,
     });
 
-    // Call Lovable AI
+    // Call Lovable AI with optimized settings for speed
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -146,10 +146,13 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3-flash-preview", // Fast preview model for speed
         messages: messageHistory,
-        max_tokens: 1024,
-        temperature: 0.7,
+        max_tokens: 800, // Slightly reduced for faster response
+        temperature: 0.3, // Lower temperature for more consistent, focused responses
+        top_p: 0.9,
+        frequency_penalty: 0.1,
+        presence_penalty: 0.1,
       }),
     });
 
