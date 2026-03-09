@@ -261,9 +261,6 @@ const Index = () => {
 
       {/* Products Preview — swipeable cards on mobile */}
       <section className="py-12 sm:py-20 md:py-28 relative overflow-hidden">
-        {/* Floating mascot — house with solar */}
-        <img src={mascotHouse} alt="" aria-hidden="true" className="absolute -left-4 top-12 sm:left-6 sm:top-16 w-20 sm:w-28 md:w-36 opacity-[0.12] sm:opacity-[0.18] animate-float pointer-events-none select-none" style={{ animationDelay: '0.5s' }} />
-        <img src={mascotBolt} alt="" aria-hidden="true" className="absolute -right-4 bottom-16 sm:right-6 sm:bottom-20 w-16 sm:w-24 md:w-28 opacity-[0.12] sm:opacity-[0.18] animate-float pointer-events-none select-none" style={{ animationDelay: '2s' }} />
         <div className="container relative z-10">
           <ScrollReveal>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-3 sm:mb-4">
