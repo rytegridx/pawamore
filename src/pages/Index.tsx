@@ -8,6 +8,9 @@ import heroImg from "@/assets/hero-install.jpg";
 import familyImg from "@/assets/family-power.jpg";
 import useSEO from "@/hooks/useSEO";
 import batteryImg from "@/assets/battery-system.jpg";
+import avatarEmeka from "@/assets/avatar-emeka.jpg";
+import avatarFunke from "@/assets/avatar-funke.jpg";
+import avatarChidi from "@/assets/avatar-chidi.jpg";
 
 const painPoints = [
   {
@@ -66,16 +69,19 @@ const testimonials = [
     quote: "My generator has not moved in 3 months. My fuel bill is zero. I wish I had done this years ago.",
     name: "Emeka A.",
     location: "Lekki, Lagos",
+    avatar: avatarEmeka,
   },
   {
     quote: "The installation was clean, fast, and professional. Best decision for my business.",
     name: "Mrs. Funke O.",
     location: "Ibadan, Oyo State",
+    avatar: avatarFunke,
   },
   {
     quote: "They followed up a week after installation just to check everything was perfect.",
     name: "Chidi M.",
     location: "Wuse 2, Abuja",
+    avatar: avatarChidi,
   },
 ];
 
@@ -304,9 +310,12 @@ const Index = () => {
                     <blockquote className="text-primary-foreground/90 text-sm sm:text-base leading-relaxed mb-4 sm:mb-6 italic">
                       "{t.quote}"
                     </blockquote>
-                    <div>
-                      <div className="font-display font-bold text-sm sm:text-base text-accent">{t.name}</div>
-                      <div className="text-primary-foreground/60 text-xs sm:text-sm">{t.location}</div>
+                    <div className="flex items-center gap-3">
+                      <img src={t.avatar} alt={t.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover ring-2 ring-accent/30" loading="lazy" />
+                      <div>
+                        <div className="font-display font-bold text-sm sm:text-base text-accent">{t.name}</div>
+                        <div className="text-primary-foreground/60 text-xs sm:text-sm">{t.location}</div>
+                      </div>
                     </div>
                   </div>
                 </ScrollReveal>
