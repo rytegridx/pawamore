@@ -375,8 +375,43 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Curved divider with sun element */}
+      <div className="relative bg-primary -mb-1">
+        {/* Curved bottom edge */}
+        <svg viewBox="0 0 1440 120" className="w-full block" preserveAspectRatio="none">
+          <path
+            d="M0,0 L0,60 Q360,120 720,60 Q1080,0 1440,60 L1440,0 Z"
+            fill="hsl(152, 65%, 29%)"
+          />
+          <path
+            d="M0,60 Q360,120 720,60 Q1080,0 1440,60 L1440,120 L0,120 Z"
+            fill="hsl(152, 53%, 9%)"
+            fillOpacity="0.85"
+          />
+        </svg>
+        {/* Decorative sun element at the center of the wave */}
+        <div className="absolute left-1/2 -translate-x-1/2 top-[30px] sm:top-[40px] z-10">
+          <div className="relative">
+            {/* Sun rays */}
+            <div className="absolute inset-0 animate-[spin_20s_linear_infinite]">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute left-1/2 top-1/2 w-0.5 h-6 sm:h-8 bg-accent/30 rounded-full origin-bottom -translate-x-1/2"
+                  style={{ transform: `translate(-50%, -100%) rotate(${i * 30}deg)`, transformOrigin: '50% 100%' }}
+                />
+              ))}
+            </div>
+            {/* Sun circle */}
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-accent shadow-[0_0_30px_hsl(37_91%_55%/0.4)] flex items-center justify-center">
+              <Sun className="w-5 h-5 sm:w-7 sm:h-7 text-foreground" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Final CTA */}
-      <section className="relative py-12 sm:py-20 md:py-28 overflow-hidden">
+      <section className="relative py-12 sm:py-20 md:py-28 overflow-hidden -mt-1">
         <div className="absolute inset-0">
           <img src={familyImg} alt="Nigerian family with power" className="w-full h-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-forest/85" />
