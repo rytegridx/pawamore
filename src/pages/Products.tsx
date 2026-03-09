@@ -296,7 +296,11 @@ const Products = () => {
                       )}
                       <div className="aspect-video bg-secondary relative overflow-hidden">
                         {primaryImage(product) ? (
-                          <img src={primaryImage(product)} alt={product.name} className="w-full h-full object-cover" />
+                          <OptimizedImage 
+                            src={primaryImage(product)} 
+                            alt={product.name} 
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/20" /></div>
                         )}
