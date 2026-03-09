@@ -142,16 +142,22 @@ const Index = () => {
     <Layout>
       {/* Hero Section — Mobile-first: full-bleed image behind, text on top */}
       <section className="relative min-h-[100svh] flex items-end sm:items-center overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
-        {/* Background image — full on mobile, clipped on desktop */}
+        {/* Background images — crossfading carousel */}
         <div className="absolute inset-0 lg:left-[40%] overflow-hidden">
-          <div className="absolute inset-0 lg:hidden">
-            <img src={heroImg} alt="Solar installation on Nigerian home" className="w-full h-full object-cover" loading="eager" />
-            <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/80 to-forest/30" />
-          </div>
-          <div className="hidden lg:block absolute inset-0" style={{ clipPath: "polygon(15% 0, 100% 0, 100% 100%, 0% 100%)" }}>
-            <img src={heroImg} alt="Solar installation on Nigerian home" className="w-full h-full object-cover" loading="eager" />
-            <div className="absolute inset-0 bg-gradient-to-r from-forest via-forest/60 to-transparent" />
-          </div>
+          {heroImages.map((img, i) => (
+            <div key={i} className="absolute inset-0 transition-opacity duration-1500 ease-in-out" style={{ opacity: i === activeHero ? 1 : 0 }}>
+              {/* Mobile */}
+              <div className="absolute inset-0 lg:hidden">
+                <img src={img.src} alt={img.alt} className="w-full h-full object-cover" loading={i === 0 ? "eager" : "lazy"} />
+                <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/80 to-forest/30" />
+              </div>
+              {/* Desktop — clipped panel */}
+              <div className="hidden lg:block absolute inset-0" style={{ clipPath: "polygon(15% 0, 100% 0, 100% 100%, 0% 100%)" }}>
+                <img src={img.src} alt={img.alt} className="w-full h-full object-cover" loading={i === 0 ? "eager" : "lazy"} />
+                <div className="absolute inset-0 bg-gradient-to-r from-forest via-forest/60 to-transparent" />
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Kente pattern overlay */}
