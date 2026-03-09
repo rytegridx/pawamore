@@ -70,6 +70,7 @@ const App = () => (
               <Route path="/order-lookup" element={<OrderLookup />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/orders" element={<Orders />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/products/new" element={<AdminProductForm />} />
               <Route path="/admin/products/:id" element={<AdminProductForm />} />
