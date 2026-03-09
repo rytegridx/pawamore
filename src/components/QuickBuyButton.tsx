@@ -66,9 +66,10 @@ const QuickBuyButton = ({ product, size = "default", className = "" }: QuickBuyB
     setSubmitting(true);
 
     try {
-      // Create order with single item
+      // Create order with user_id or guest email
       const { data: order, error } = await supabase.from("orders").insert({
-        user_id: user!.id,
+        user_id: user?.id || null,
+        guest_email: !user ? form.email : null,
         total_amount: unitPrice,
         shipping_name: form.name,
         shipping_phone: form.phone,
