@@ -15,6 +15,7 @@ import avatarTunde from "@/assets/avatar-tunde.jpg";
 import avatarAlhaji from "@/assets/avatar-alhaji.jpg";
 import avatarNgozi from "@/assets/avatar-ngozi.jpg";
 import mascotBattery from "@/assets/mascot-battery.png";
+import mascotTiredGen from "@/assets/mascot-tired-gen.png";
 import mascotEco from "@/assets/mascot-eco.png";
 
 const painPoints = [
