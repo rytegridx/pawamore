@@ -43,7 +43,7 @@ const AdminProductForm = () => {
   };
 
   const fetchProduct = async () => {
-    const { data } = await supabase.from("products").select("*, product_images(id, image_url, is_primary, sort_order)").eq("id", id!).single();
+    const { data } = await supabase.from("products").select("*, product_images(id, image_url, is_primary, sort_order), product_videos(id, video_url, thumbnail_url, sort_order)").eq("id", id!).single();
     if (data) {
       setForm({
         name: data.name, slug: data.slug, category_id: data.category_id || "",
@@ -55,6 +55,7 @@ const AdminProductForm = () => {
         specs: data.specs ? JSON.stringify(data.specs, null, 2) : "",
       });
       setImages(((data as any).product_images || []).map((img: any) => ({ id: img.id, url: img.image_url, is_primary: img.is_primary })));
+      setVideos(((data as any).product_videos || []).map((vid: any) => ({ id: vid.id, video_url: vid.video_url, thumbnail_url: vid.thumbnail_url, sort_order: vid.sort_order })));
     }
   };
 
