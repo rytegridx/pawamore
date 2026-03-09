@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ScrollReveal from "@/components/ScrollReveal";
+import MobileScrollSection from "@/components/MobileScrollSection";
 import Layout from "@/components/Layout";
 import { Fuel, Volume2, Clock, ClipboardCheck, Settings, Wrench, HeartHandshake, Shield, CheckCircle, Star, ChevronRight, Zap, Battery, Sun, ArrowRight, Phone } from "lucide-react";
 import heroImg from "@/assets/hero-install.jpg";
