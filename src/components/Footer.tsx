@@ -11,10 +11,6 @@ const Footer = () => {
       {/* Newsletter Section */}
       <div className="container py-10 border-b border-primary-foreground/10">
         <div className="max-w-xl mx-auto text-center">
-          <h3 className="font-display font-bold text-xl mb-2">Stay Powered Up</h3>
-          <p className="text-primary-foreground/70 text-sm mb-4">
-            Get energy tips, exclusive offers, and product updates in your inbox.
-          </p>
           <NewsletterSignup source="footer" />
         </div>
       </div>
