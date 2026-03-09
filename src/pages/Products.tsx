@@ -176,7 +176,11 @@ const Products = () => {
             </ScrollReveal>
             <ScrollReveal delay={200}>
               <div className="rounded-2xl overflow-hidden shadow-[var(--shadow-elevated)]">
-                <img src={batteryImg} alt="Power tanks, batteries and inverters by PawaMore" className="w-full h-full object-cover aspect-[4/3]" />
+                <OptimizedImage 
+                  src={batteryImg} 
+                  alt="Power tanks, batteries and inverters by PawaMore" 
+                  className="w-full h-full object-cover aspect-[4/3]" 
+                />
               </div>
             </ScrollReveal>
           </div>
