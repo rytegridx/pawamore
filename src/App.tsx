@@ -28,6 +28,7 @@ import Wishlist from "./pages/Wishlist";
 import Orders from "./pages/Orders";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminProductForm from "./pages/AdminProductForm";
+import Profile from "./pages/Profile";
 import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 
