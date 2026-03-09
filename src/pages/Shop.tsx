@@ -75,20 +75,20 @@ const Shop = () => {
   return (
     <Layout>
       {/* Header */}
-      <section className="relative py-10 sm:py-14" style={{ background: "var(--gradient-hero)" }}>
+      <section className="relative py-6 sm:py-10 lg:py-14" style={{ background: "var(--gradient-hero)" }}>
         <div className="absolute inset-0 kente-pattern opacity-20" />
-        <div className="container relative z-10 text-center">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-primary-foreground mb-3">
+        <div className="container relative z-10 text-center px-4 sm:px-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-primary-foreground mb-2 sm:mb-3">
             Shop All <span className="text-accent">Products</span>
           </h1>
-          <p className="text-sm sm:text-base text-primary-foreground/80 max-w-lg mx-auto">
+          <p className="text-sm sm:text-base text-primary-foreground/80 max-w-lg mx-auto px-2">
             Browse our complete catalog of solar systems, batteries, and accessories
           </p>
         </div>
       </section>
 
       {/* Search + Filter */}
-      <section className="py-4 sm:py-6 border-b border-border sticky top-16 md:top-20 z-40 bg-background/95 backdrop-blur-sm">
+      <section className="py-3 sm:py-4 lg:py-6 border-b border-border sticky top-14 xs:top-16 md:top-20 z-40 bg-background/95 backdrop-blur-sm">
         <div className="container">
           <div className="flex flex-col sm:flex-row gap-3 items-center">
             {/* Search */}
