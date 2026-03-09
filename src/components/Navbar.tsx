@@ -145,6 +145,12 @@ const Navbar = () => {
                        <Shield className="w-4 h-4 inline mr-2" /> Admin Dashboard
                      </Link>
                      )}
+                     <Link to="/profile" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg text-base font-medium text-primary-foreground/80 hover:bg-primary/20 min-h-[44px] flex items-center">
+                       <Settings className="w-4 h-4 inline mr-2" /> Profile
+                     </Link>
+                     <Link to="/wishlist" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg text-base font-medium text-primary-foreground/80 hover:bg-primary/20 min-h-[44px] flex items-center">
+                       <Heart className="w-4 h-4 inline mr-2" /> Wishlist
+                     </Link>
                      <Link to="/orders" onClick={() => setIsOpen(false)} className="block px-4 py-3 rounded-lg text-base font-medium text-primary-foreground/80 hover:bg-primary/20 min-h-[44px] flex items-center">
                        <User className="w-4 h-4 inline mr-2" /> My Orders
                      </Link>

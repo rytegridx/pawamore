@@ -49,6 +49,78 @@ export type Database = {
           },
         ]
       }
+      contact_submissions: {
+        Row: {
+          city: string | null
+          email: string
+          id: string
+          interest: string | null
+          ip_address: unknown
+          message: string | null
+          name: string
+          phone: string | null
+          status: string | null
+          submitted_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          city?: string | null
+          email: string
+          id?: string
+          interest?: string | null
+          ip_address?: unknown
+          message?: string | null
+          name: string
+          phone?: string | null
+          status?: string | null
+          submitted_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          city?: string | null
+          email?: string
+          id?: string
+          interest?: string | null
+          ip_address?: unknown
+          message?: string | null
+          name?: string
+          phone?: string | null
+          status?: string | null
+          submitted_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      newsletter_subscriptions: {
+        Row: {
+          email: string
+          id: string
+          ip_address: unknown
+          is_active: boolean
+          source: string | null
+          subscribed_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          ip_address?: unknown
+          is_active?: boolean
+          source?: string | null
+          subscribed_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          ip_address?: unknown
+          is_active?: boolean
+          source?: string | null
+          subscribed_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
