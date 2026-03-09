@@ -89,13 +89,31 @@ const Checkout = () => {
       });
   }, []);
 
+  // Show loading state while auth is loading
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <LoadingSpinner text="Loading checkout..." />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Redirect to login if not authenticated
   if (!user) {
     sessionStorage.setItem("intendedPath", "/checkout");
     return (
       <Layout>
-        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-          <p>Please log in to continue.</p>
-          <Link to="/login"><Button variant="amber">Login</Button></Link>
+        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+          <ShoppingCart className="w-16 h-16 text-muted-foreground/30" />
+          <h2 className="text-xl font-bold">Login Required</h2>
+          <p className="text-muted-foreground max-w-sm">
+            Please log in to continue with your checkout. Your cart will be preserved.
+          </p>
+          <Link to="/login">
+            <Button variant="amber" size="lg">Login to Continue</Button>
+          </Link>
         </div>
       </Layout>
     );
