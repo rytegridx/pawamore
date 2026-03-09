@@ -446,10 +446,31 @@ const Profile = () => {
                           <p className="text-sm text-muted-foreground mb-2">
                             {new Date(order.created_at).toLocaleDateString()} • {order.shipping_city}
                           </p>
-                          <div className="text-sm">
+                          <div className="text-sm mb-3">
                             <span className="text-muted-foreground">Items: </span>
                             {order.order_items?.map(item => `${item.product_name} (${item.quantity})`).join(', ') || 'No items'}
                           </div>
+                          {(order.status === "pending" || order.status === "confirmed") && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="gap-1.5"
+                              onClick={async () => {
+                                const { error } = await supabase
+                                  .from("orders")
+                                  .update({ status: "cancelled" as any })
+                                  .eq("id", order.id);
+                                if (!error) {
+                                  setOrders(orders.map(o => o.id === order.id ? { ...o, status: "cancelled" } : o));
+                                  toast({ title: "Order cancelled" });
+                                } else {
+                                  toast({ title: "Failed to cancel", description: error.message, variant: "destructive" });
+                                }
+                              }}
+                            >
+                              <XCircle className="w-3.5 h-3.5" /> Cancel Order
+                            </Button>
+                          )}
                         </div>
                       ))}
                       <div className="text-center pt-4">
