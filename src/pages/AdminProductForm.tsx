@@ -318,6 +318,34 @@ const AdminProductForm = () => {
             </div>
           </div>
 
+          {/* Videos */}
+          <div className="bg-card rounded-xl border border-border p-4 sm:p-6 space-y-4">
+            <h2 className="font-display font-bold text-lg">Product Videos</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {videos.map((vid, i) => (
+                <div key={i} className="relative rounded-lg overflow-hidden border border-border aspect-video bg-secondary">
+                  <video src={vid.video_url} className="w-full h-full object-cover" muted />
+                  <button type="button" onClick={() => removeVideo(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                  <div className="absolute bottom-1 left-1 bg-background/80 text-foreground text-[9px] font-bold px-1.5 py-0.5 rounded">
+                    Video {i + 1}
+                  </div>
+                </div>
+              ))}
+              <label className="aspect-video rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                {videoUploading ? <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /> : (
+                  <>
+                    <Upload className="w-6 h-6 text-muted-foreground mb-1" />
+                    <span className="text-[10px] text-muted-foreground">Upload Video</span>
+                  </>
+                )}
+                <input type="file" accept="video/*" multiple onChange={handleVideoUpload} className="hidden" disabled={videoUploading} />
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground">Upload short videos (MP4, WebM). Keep file sizes under 50MB for best performance.</p>
+          </div>
+
           {/* Specs */}
           <div className="bg-card rounded-xl border border-border p-4 sm:p-6 space-y-4">
             <h2 className="font-display font-bold text-lg">Technical Specs (JSON)</h2>

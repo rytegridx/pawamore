@@ -214,8 +214,9 @@ const ProductDetail = () => {
             )}
           </div>
         </div>
-          {/* Reviews Section */}
-          <div className="col-span-2">
+
+        {/* Reviews Section */}
+        <div className="mt-12 lg:mt-16">
             <ProductReviews
               productId={product.id}
               productName={product.name}
