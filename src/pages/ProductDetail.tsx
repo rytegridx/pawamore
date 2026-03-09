@@ -27,19 +27,60 @@ const ProductDetail = () => {
     description: product?.short_description || "View product details at PawaMore Systems Nigeria",
   });
 
-  useEffect(() => {
-    const fetch = async () => {
+  const fetchProduct = async () => {
+    if (!slug) return;
+    
+    try {
       const { data } = await supabase
         .from("products")
         .select("*, product_images(id, image_url, is_primary, sort_order), product_categories(name, slug)")
-        .eq("slug", slug!)
+        .eq("slug", slug)
         .eq("status", "active")
         .maybeSingle();
+      
       setProduct(data);
+      
+      if (data) {
+        await fetchReviews(data.id);
+      }
+    } catch (error) {
+      console.error("Error fetching product:", error);
+    } finally {
       setLoading(false);
-    };
-    if (slug) fetch();
-  }, [slug]);
+    }
+  };
+
+  const fetchReviews = async (productId: string) => {
+    try {
+      const { data: reviewsData } = await supabase
+        .from("product_reviews")
+        .select(`
+          id, user_id, rating, title, content, is_approved, created_at,
+          profiles(display_name)
+        `)
+        .eq("product_id", productId)
+        .eq("is_approved", true)
+        .order("created_at", { ascending: false });
+
+      setReviews(reviewsData || []);
+
+      // Calculate average rating
+      if (reviewsData && reviewsData.length > 0) {
+        const average = reviewsData.reduce((sum, review) => sum + review.rating, 0) / reviewsData.length;
+        setReviewStats({ average, total: reviewsData.length });
+      } else {
+        setReviewStats({ average: 0, total: 0 });
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!authLoading) {
+      fetchProduct();
+    }
+  }, [slug, authLoading]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
