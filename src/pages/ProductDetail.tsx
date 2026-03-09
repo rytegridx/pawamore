@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { ShoppingCart, Share2, Copy, CheckCircle, ChevronLeft, Image as ImageIcon, Zap, Star } from "lucide-react";
+import { ShoppingCart, Share2, Copy, CheckCircle, ChevronLeft, Image as ImageIcon, Play, Zap, Star } from "lucide-react";
 import QuickBuyButton from "@/components/QuickBuyButton";
 import ProductReviews from "@/components/ProductReviews";
 import { toast } from "@/hooks/use-toast";
