@@ -8,6 +8,7 @@ import QuickBuyButton from "@/components/QuickBuyButton";
 import { supabase } from "@/integrations/supabase/client";
 import useSEO from "@/hooks/useSEO";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import batteryImg from "@/assets/battery-system.jpg";
 
 interface Product {
