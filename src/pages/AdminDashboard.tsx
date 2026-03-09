@@ -10,8 +10,11 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   Plus, Edit, Trash2, Image as ImageIcon, Package, LogOut, Eye,
   ShoppingBag, Users, DollarSign, ChevronDown, ChevronUp, Bell,
-  Mail, Star, TrendingUp, AlertTriangle, CheckCircle, Clock, XCircle
+  Mail, Star, TrendingUp, AlertTriangle, CheckCircle, Clock, XCircle,
+  Ticket, HelpCircle
 } from "lucide-react";
+import SupportTicketManagement from "@/components/admin/SupportTicketManagement";
+import FAQManagement from "@/components/admin/FAQManagement";
 import logo from "@/assets/logo.png";
 
 interface Product {
@@ -244,6 +247,12 @@ const AdminDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="newsletter" className="text-xs sm:text-sm whitespace-nowrap">
               <Mail className="w-3.5 h-3.5 mr-1" />Newsletter
+            </TabsTrigger>
+            <TabsTrigger value="support" className="text-xs sm:text-sm whitespace-nowrap">
+              <Ticket className="w-3.5 h-3.5 mr-1" />Support
+            </TabsTrigger>
+            <TabsTrigger value="faqs" className="text-xs sm:text-sm whitespace-nowrap">
+              <HelpCircle className="w-3.5 h-3.5 mr-1" />FAQs
             </TabsTrigger>
           </TabsList>
 
@@ -623,6 +632,17 @@ const AdminDashboard = () => {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          {/* Support Tickets Tab */}
+          <TabsContent value="support">
+            <h2 className="text-lg sm:text-xl font-extrabold mb-6">Support Tickets</h2>
+            <SupportTicketManagement />
+          </TabsContent>
+
+          {/* FAQs Tab */}
+          <TabsContent value="faqs">
+            <FAQManagement />
           </TabsContent>
         </Tabs>
       </div>

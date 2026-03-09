@@ -28,6 +28,7 @@ import Wishlist from "./pages/Wishlist";
 import Orders from "./pages/Orders";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminProductForm from "./pages/AdminProductForm";
+import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/products/new" element={<AdminProductForm />} />
               <Route path="/admin/products/:id" element={<AdminProductForm />} />
+              <Route path="/help" element={<HelpCenter />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </CartProvider>
