@@ -33,7 +33,7 @@ const NewsletterSignup = ({ variant = "default", source = "website", className =
         .from("newsletter_subscriptions")
         .insert({
           email: email.toLowerCase().trim(),
-          source: "website",
+          source: source,
           user_agent: navigator.userAgent,
         });
 
