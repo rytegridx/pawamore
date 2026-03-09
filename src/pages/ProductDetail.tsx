@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { ShoppingCart, Share2, Copy, CheckCircle, ChevronLeft, Image as ImageIcon, Zap, Star } from "lucide-react";
+import { ShoppingCart, Share2, Copy, CheckCircle, ChevronLeft, Image as ImageIcon, Play, Zap, Star } from "lucide-react";
 import QuickBuyButton from "@/components/QuickBuyButton";
 import ProductReviews from "@/components/ProductReviews";
 import { toast } from "@/hooks/use-toast";
@@ -15,8 +15,10 @@ const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { user, loading: authLoading } = useAuth();
   const [product, setProduct] = useState<any>(null);
+  const [videos, setVideos] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [reviewStats, setReviewStats] = useState({ average: 0, total: 0 });
+  const [activeTab, setActiveTab] = useState<'images' | 'videos'>('images');
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -33,12 +35,13 @@ const ProductDetail = () => {
     try {
       const { data } = await supabase
         .from("products")
-        .select("*, product_images(id, image_url, is_primary, sort_order), product_categories(name, slug)")
+        .select("*, product_images(id, image_url, is_primary, sort_order), product_videos(id, video_url, thumbnail_url, sort_order), product_categories(name, slug)")
         .eq("slug", slug)
         .eq("status", "active")
         .maybeSingle();
       
       setProduct(data);
+      setVideos(data?.product_videos?.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)) || []);
       
       if (data) {
         await fetchReviews(data.id);
@@ -116,22 +119,64 @@ const ProductDetail = () => {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
-          {/* Images */}
+          {/* Images & Videos */}
           <div>
-            <div className="aspect-square bg-secondary rounded-2xl overflow-hidden mb-3">
-              {images.length > 0 ? (
-                <img src={images[selectedImage]?.image_url} alt={product.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-16 h-16 text-muted-foreground/20" /></div>
-              )}
-            </div>
-            {images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {images.map((img: any, i: number) => (
-                  <button key={img.id} onClick={() => setSelectedImage(i)}
-                    className={`w-20 h-20 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 ${i === selectedImage ? "border-primary" : "border-border"}`}>
-                    <img src={img.image_url} alt="" className="w-full h-full object-cover" />
-                  </button>
+            {/* Tab switcher if videos exist */}
+            {videos.length > 0 && (
+              <div className="flex gap-2 mb-3">
+                <button
+                  onClick={() => setActiveTab('images')}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === 'images' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:bg-secondary/80'}`}
+                >
+                  <ImageIcon className="w-4 h-4" /> Photos ({images.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('videos')}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${activeTab === 'videos' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:bg-secondary/80'}`}
+                >
+                  <Play className="w-4 h-4" /> Videos ({videos.length})
+                </button>
+              </div>
+            )}
+
+            {/* Main media display */}
+            {activeTab === 'images' ? (
+              <>
+                <div className="aspect-square bg-secondary rounded-2xl overflow-hidden mb-3">
+                  {images.length > 0 ? (
+                    <img src={images[selectedImage]?.image_url} alt={product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><ImageIcon className="w-16 h-16 text-muted-foreground/20" /></div>
+                  )}
+                </div>
+                {images.length > 1 && (
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {images.map((img: any, i: number) => (
+                      <button key={img.id} onClick={() => setSelectedImage(i)}
+                        className={`w-20 h-20 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 ${i === selectedImage ? "border-primary" : "border-border"}`}>
+                        <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="space-y-3">
+                {videos.map((video: any, i: number) => (
+                  <div key={video.id} className="rounded-2xl overflow-hidden bg-secondary">
+                    <video
+                      src={video.video_url}
+                      controls
+                      className="w-full aspect-video"
+                      poster={video.thumbnail_url || undefined}
+                      preload="metadata"
+                    />
+                    {videos.length > 1 && (
+                      <div className="p-2 text-center text-xs text-muted-foreground">
+                        Video {i + 1} of {videos.length}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
