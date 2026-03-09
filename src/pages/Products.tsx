@@ -69,7 +69,6 @@ const Products = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for auth to be ready before fetching
     if (authLoading) return;
 
     let isMounted = true;
@@ -87,10 +86,7 @@ const Products = () => {
           .order("is_popular", { ascending: false })
           .limit(PRODUCTS_PREVIEW_LIMIT);
 
-        if (fetchError) {
-          console.error("Products fetch error:", fetchError);
-          throw fetchError;
-        }
+        if (fetchError) throw fetchError;
 
         if (isMounted) {
           setProducts((data as any) || []);
@@ -109,20 +105,8 @@ const Products = () => {
 
     fetchData();
 
-    // Fallback timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      if (isMounted && loading) {
-        console.warn("Products fetch timeout - setting loading to false");
-        setLoading(false);
-        setError("Loading timeout - please refresh the page");
-      }
-    }, 10000);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
-    };
-  }, [authLoading]); // Re-run when auth loading state changes
+    return () => { isMounted = false; };
+  }, [authLoading]);
 
   const primaryImage = (p: Product) => p.product_images?.find((i) => i.is_primary)?.image_url || p.product_images?.[0]?.image_url;
 
