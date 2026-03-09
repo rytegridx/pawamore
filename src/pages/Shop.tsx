@@ -129,8 +129,13 @@ const Shop = () => {
         <div className="container px-4 sm:px-6">
           <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">{filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""} found</p>
 
+          <InventoryAlert />
           {loading ? (
-            <div className="text-center py-12 sm:py-20 text-muted-foreground text-sm sm:text-base">Loading products...</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <ProductSkeleton key={i} />
+              ))}
+            </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12 sm:py-20">
               <p className="text-muted-foreground mb-4 text-sm sm:text-base px-4">No products found. Try a different search or category.</p>
