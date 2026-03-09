@@ -8,6 +8,8 @@ interface MobileScrollSectionProps {
   showArrows?: boolean;
   showDots?: boolean;
   showSwipeHint?: boolean;
+  /** Style of progress indicator: 'dots' (default), 'bar', or 'counter' */
+  indicatorStyle?: "dots" | "bar" | "counter";
 }
 
 const MobileScrollSection = ({
@@ -16,6 +18,7 @@ const MobileScrollSection = ({
   showArrows = true,
   showDots = true,
   showSwipeHint = true,
+  indicatorStyle = "dots",
 }: MobileScrollSectionProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -23,15 +26,34 @@ const MobileScrollSection = ({
   const isMobile = useIsMobile();
   const totalItems = children.length;
 
+  const getChildPositions = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return [];
+    const children = Array.from(el.children) as HTMLElement[];
+    return children.map((child) => ({
+      left: child.offsetLeft,
+      width: child.offsetWidth,
+      center: child.offsetLeft + child.offsetWidth / 2,
+    }));
+  }, []);
+
   const updateActiveIndex = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const scrollLeft = el.scrollLeft;
-    const childWidth = el.scrollWidth / totalItems;
-    const index = Math.round(scrollLeft / childWidth);
-    setActiveIndex(Math.min(index, totalItems - 1));
-    if (scrollLeft > 10) setHasScrolled(true);
-  }, [totalItems]);
+    const scrollCenter = el.scrollLeft + el.clientWidth / 2;
+    const positions = getChildPositions();
+    let closest = 0;
+    let minDist = Infinity;
+    positions.forEach((pos, i) => {
+      const dist = Math.abs(pos.center - scrollCenter);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = i;
+      }
+    });
+    setActiveIndex(closest);
+    if (el.scrollLeft > 10) setHasScrolled(true);
+  }, [getChildPositions]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -40,25 +62,23 @@ const MobileScrollSection = ({
     return () => el.removeEventListener("scroll", updateActiveIndex);
   }, [updateActiveIndex]);
 
-  const scrollTo = (direction: "left" | "right") => {
+  const scrollToIndex = useCallback((index: number) => {
     const el = scrollRef.current;
     if (!el) return;
-    const childWidth = el.scrollWidth / totalItems;
+    const positions = getChildPositions();
+    if (!positions[index]) return;
+    const targetScroll = positions[index].left - (el.clientWidth - positions[index].width) / 2;
+    el.scrollTo({ left: targetScroll, behavior: "smooth" });
+  }, [getChildPositions]);
+
+  const scrollTo = (direction: "left" | "right") => {
     const newIndex = direction === "left"
       ? Math.max(0, activeIndex - 1)
       : Math.min(totalItems - 1, activeIndex + 1);
-    el.scrollTo({ left: childWidth * newIndex, behavior: "smooth" });
-  };
-
-  const scrollToDot = (index: number) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const childWidth = el.scrollWidth / totalItems;
-    el.scrollTo({ left: childWidth * index, behavior: "smooth" });
+    scrollToIndex(newIndex);
   };
 
   if (!isMobile) {
-    // Desktop: just render children in a grid-like wrapper (parent handles grid)
     return <>{children}</>;
   }
 
@@ -76,13 +96,13 @@ const MobileScrollSection = ({
         ))}
       </div>
 
-      {/* Navigation arrows */}
+      {/* Navigation arrows — positioned inside container edges */}
       {showArrows && totalItems > 1 && (
         <>
           {activeIndex > 0 && (
             <button
               onClick={() => scrollTo("left")}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-card/90 shadow-md border border-border flex items-center justify-center active:scale-90 transition-transform"
+              className="absolute left-1 top-[40%] -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm shadow-lg border border-border/50 flex items-center justify-center active:scale-90 transition-all"
               aria-label="Previous"
             >
               <ChevronLeft className="w-4 h-4 text-foreground" />
@@ -91,7 +111,7 @@ const MobileScrollSection = ({
           {activeIndex < totalItems - 1 && (
             <button
               onClick={() => scrollTo("right")}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-card/90 shadow-md border border-border flex items-center justify-center active:scale-90 transition-transform"
+              className="absolute right-1 top-[40%] -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm shadow-lg border border-border/50 flex items-center justify-center active:scale-90 transition-all"
               aria-label="Next"
             >
               <ChevronRight className="w-4 h-4 text-foreground" />
@@ -100,21 +120,40 @@ const MobileScrollSection = ({
         </>
       )}
 
-      {/* Dot indicators */}
+      {/* Indicators */}
       {showDots && totalItems > 1 && (
-        <div className="flex justify-center gap-1.5 mt-4">
-          {Array.from({ length: totalItems }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => scrollToDot(i)}
-              className={`rounded-full transition-all duration-300 ${
-                i === activeIndex
-                  ? "w-6 h-2 bg-accent"
-                  : "w-2 h-2 bg-muted-foreground/30"
-              }`}
-              aria-label={`Go to item ${i + 1}`}
-            />
-          ))}
+        <div className="mt-4">
+          {indicatorStyle === "dots" && (
+            <div className="flex justify-center gap-1.5">
+              {Array.from({ length: totalItems }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => scrollToIndex(i)}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === activeIndex
+                      ? "w-6 h-2 bg-accent"
+                      : "w-2 h-2 bg-muted-foreground/30"
+                  }`}
+                  aria-label={`Go to item ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
+          {indicatorStyle === "bar" && (
+            <div className="mx-auto max-w-[120px] h-1 bg-muted-foreground/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-accent rounded-full transition-all duration-300"
+                style={{ width: `${((activeIndex + 1) / totalItems) * 100}%` }}
+              />
+            </div>
+          )}
+          {indicatorStyle === "counter" && (
+            <div className="text-center">
+              <span className="text-xs font-display font-bold text-accent">{activeIndex + 1}</span>
+              <span className="text-xs text-muted-foreground/50 mx-1">/</span>
+              <span className="text-xs text-muted-foreground/50">{totalItems}</span>
+            </div>
+          )}
         </div>
       )}
 
