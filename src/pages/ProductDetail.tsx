@@ -172,17 +172,23 @@ const ProductDetail = () => {
               {product.stock_quantity > 0 ? <span className="text-primary font-semibold">✓ In Stock ({product.stock_quantity} available)</span> : <span className="text-destructive font-semibold">Out of Stock</span>}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
-              <Button variant="amber" size="lg" className="flex-1" onClick={() => addToCart(product.id)} disabled={product.stock_quantity <= 0}>
+            {/* Primary Actions - Mobile First */}
+            <div className="flex flex-col gap-3 mb-4">
+              <Button variant="amber" size="lg" className="w-full" onClick={() => addToCart(product.id)} disabled={product.stock_quantity <= 0}>
                 <ShoppingCart className="w-5 h-5 mr-2" /> Add to Cart
               </Button>
-              <QuickBuyButton product={product} size="lg" className="flex-1" />
-              <Button variant="outline" size="lg" onClick={handleShare}>
-                <Share2 className="w-4 h-4 mr-2" /> Share
+              <QuickBuyButton product={product} size="lg" className="w-full" />
+            </div>
+
+            {/* Secondary Actions - Compact on Mobile */}
+            <div className="flex gap-2 mb-6">
+              <Button variant="outline" size="sm" onClick={handleShare} className="flex-1">
+                <Share2 className="w-4 h-4 mr-1 sm:mr-2" /> 
+                <span className="hidden xs:inline">Share</span>
               </Button>
-              <Button variant="ghost" size="lg" onClick={handleCopyLink}>
-                {copied ? <CheckCircle className="w-4 h-4 mr-2 text-primary" /> : <Copy className="w-4 h-4 mr-2" />}
-                {copied ? "Copied!" : "Copy Link"}
+              <Button variant="ghost" size="sm" onClick={handleCopyLink} className="flex-1">
+                {copied ? <CheckCircle className="w-4 h-4 mr-1 sm:mr-2 text-primary" /> : <Copy className="w-4 h-4 mr-1 sm:mr-2" />}
+                <span className="hidden xs:inline">{copied ? "Copied!" : "Copy Link"}</span>
               </Button>
             </div>
 
