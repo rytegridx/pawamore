@@ -99,26 +99,30 @@ Deno.serve(async (req) => {
 
     // Create new conversation if needed
     if (!convId) {
-      console.log("Creating new conversation:", { user_id, guest_id });
-      
-      // Ensure we have either user_id or guest_id, not both null
-      const insertData = {
+      // Ensure we have valid participant data
+      const conversationData = {
         title: message.slice(0, 50) + (message.length > 50 ? "..." : ""),
-        user_id: user_id || null,
-        guest_id: !user_id ? (guest_id || `guest_${Date.now()}`) : null,
+        user_id: null,
+        guest_id: null
       };
-      
-      console.log("Insert data:", insertData);
+
+      if (user_id) {
+        conversationData.user_id = user_id;
+      } else {
+        conversationData.guest_id = guest_id || `guest_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      }
+
+      console.log("Creating conversation with data:", conversationData);
 
       const { data: newConv, error: convError } = await supabase
         .from("chat_conversations")
-        .insert(insertData)
+        .insert(conversationData)
         .select("id")
         .single();
 
       if (convError) {
         console.error("Conversation creation error:", convError);
-        throw convError;
+        throw new Error(`Failed to create conversation: ${convError.message}`);
       }
       convId = newConv.id;
     }
