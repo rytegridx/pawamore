@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Save, MapPin, ShoppingBag, Eye, Upload, Lock, Mail } from "lucide-react";
+import { User, Save, MapPin, ShoppingBag, Eye, Upload, Lock, Mail, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface Order {
