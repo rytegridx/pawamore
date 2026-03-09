@@ -115,9 +115,10 @@ const LiveChat = () => {
   return (
     <>
       {/* Chat Toggle Button */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {!isOpen && (
           <motion.div
+            key="chat-button"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
@@ -136,9 +137,10 @@ const LiveChat = () => {
       </AnimatePresence>
 
       {/* Chat Window */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isOpen && (
           <motion.div
+            key="chat-window"
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ 
               opacity: 1, 

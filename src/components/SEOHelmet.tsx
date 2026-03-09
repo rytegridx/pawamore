@@ -87,7 +87,7 @@ const SEOHelmet = ({
         "addressCountry": "NG"
       },
       "sameAs": [
-        "https://wa.me/2347062716154"
+        "https://wa.me/YOUR_WHATSAPP_NUMBER_HERE"
       ]
     };
 

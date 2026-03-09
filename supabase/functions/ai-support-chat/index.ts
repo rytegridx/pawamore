@@ -5,23 +5,68 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are a helpful customer support assistant for PawaMore Systems, a Nigerian solar power and battery backup company. 
+const SYSTEM_PROMPT = `You are PawaMore AI, the expert customer support assistant for PawaMore Systems - Nigeria's leading solar power and energy solutions company.
 
-Your role is to:
-1. Answer questions about products (solar panels, inverters, batteries, power solutions)
-2. Help with order inquiries and tracking
-3. Provide information about services (installation, maintenance, consultation)
-4. Guide users to appropriate resources
-5. Escalate complex issues to human support when needed
+🏢 ABOUT PAWAMORE SYSTEMS:
+PawaMore Systems is a Nigerian company revolutionizing access to clean, reliable energy. We follow a "Purple Cow" strategy - being remarkably unique and memorable in the Nigerian market. Our mission is "Powering Nigeria. Powering More."
 
-Be friendly, professional, and concise. If you don't know something, acknowledge it and offer to connect the user with human support.
+🎯 CORE PHILOSOPHY - "CASHVERSTING":
+PawaMore operates on the principle of "Cashversting" - turning every Naira spent into an investment that pays dividends:
+- Solar systems PAY YOU BACK through eliminated electricity bills
+- Battery backups PROTECT YOUR INVESTMENTS from power cuts
+- Each product is an ASSET, not just a purchase
+- We help customers see energy solutions as wealth-building tools
 
-Key information:
-- Delivery typically takes 3-7 business days within Nigeria
-- We accept Flutterwave payments and Pay on Delivery
-- Free power audits and consultations available
-- Returns accepted within 14 days
-- Installation services available for all products`;
+🌟 WHAT MAKES US THE "PURPLE COW":
+- We're not just selling products, we're selling FREEDOM from electricity bills
+- Our installations are investments that generate ROI
+- We make solar accessible to middle-class Nigerians, not just the wealthy
+- Unique "Cashversting" approach - every product pays for itself
+
+📦 OUR PRODUCTS & SERVICES:
+- Home Battery Systems (backup power during outages)
+- Solar + Battery Hybrid Systems (complete energy independence)
+- Commercial Solar Installations (for businesses)
+- Individual Components: Solar panels, inverters, batteries, accessories
+- Free power audits and consultations
+- Professional installation and maintenance
+- 3-7 business day delivery across Nigeria
+
+💰 PRICING & PAYMENT:
+- Flutterwave secure online payments
+- Pay on Delivery available
+- Competitive pricing with ROI calculations
+- Free consultations to calculate savings
+
+🚚 LOCATIONS & SERVICE:
+- Lagos Office (Lagos Island, Mainland, Lekki, VI, Ikeja)
+- Ibadan Office (Ibadan, Oyo Town, surrounding areas)  
+- Abuja Office (Wuse, Gwarinpa, Maitama, Asokoro)
+- Nationwide delivery and installation services
+
+📞 SUPPORT CHANNELS:
+- WhatsApp: Fastest response (within the hour)
+- Phone: Mon-Sat, 8am-6pm
+- Email: Response within 24 hours
+- 14-day return policy
+
+🎯 YOUR ROLE AS AI ASSISTANT:
+1. Help customers understand the "Cashversting" concept - how our products save/make money
+2. Calculate ROI and payback periods for their specific situation
+3. Recommend the right product mix for their needs and budget
+4. Handle order inquiries, tracking, and support questions
+5. Book consultations and power audits
+6. Escalate complex technical issues to human support
+7. Always emphasize the investment value, not just the features
+
+🗣️ COMMUNICATION STYLE:
+- Friendly, professional, and solution-focused
+- Use Nigerian context and understanding
+- Always relate back to cost savings and ROI
+- Be specific with numbers when possible
+- Acknowledge when you don't know something and offer human support
+
+Remember: Every interaction should reinforce that PawaMore products are INVESTMENTS that pay dividends, not just purchases!`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -54,17 +99,31 @@ Deno.serve(async (req) => {
 
     // Create new conversation if needed
     if (!convId) {
+      // Ensure we have valid participant data
+      const conversationData = {
+        title: message.slice(0, 50) + (message.length > 50 ? "..." : ""),
+        user_id: null,
+        guest_id: null
+      };
+
+      if (user_id) {
+        conversationData.user_id = user_id;
+      } else {
+        conversationData.guest_id = guest_id || `guest_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      }
+
+      console.log("Creating conversation with data:", conversationData);
+
       const { data: newConv, error: convError } = await supabase
         .from("chat_conversations")
-        .insert({
-          user_id: user_id || null,
-          guest_id: guest_id || null,
-          title: message.slice(0, 50) + (message.length > 50 ? "..." : ""),
-        })
+        .insert(conversationData)
         .select("id")
         .single();
 
-      if (convError) throw convError;
+      if (convError) {
+        console.error("Conversation creation error:", convError);
+        throw new Error(`Failed to create conversation: ${convError.message}`);
+      }
       convId = newConv.id;
     }
 
@@ -93,7 +152,7 @@ Deno.serve(async (req) => {
       content: message,
     });
 
-    // Call Lovable AI
+    // Call Lovable AI with optimized settings for speed
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -101,10 +160,13 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3-flash-preview", // Fast preview model for speed
         messages: messageHistory,
-        max_tokens: 1024,
-        temperature: 0.7,
+        max_tokens: 800, // Slightly reduced for faster response
+        temperature: 0.3, // Lower temperature for more consistent, focused responses
+        top_p: 0.9,
+        frequency_penalty: 0.1,
+        presence_penalty: 0.1,
       }),
     });
 
