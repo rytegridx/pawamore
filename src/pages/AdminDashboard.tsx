@@ -633,6 +633,17 @@ const AdminDashboard = () => {
               </div>
             )}
           </TabsContent>
+
+          {/* Support Tickets Tab */}
+          <TabsContent value="support">
+            <h2 className="text-lg sm:text-xl font-extrabold mb-6">Support Tickets</h2>
+            <SupportTicketManagement />
+          </TabsContent>
+
+          {/* FAQs Tab */}
+          <TabsContent value="faqs">
+            <FAQManagement />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
