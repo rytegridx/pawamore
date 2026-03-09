@@ -20,7 +20,7 @@ const Layout = ({ children, seoTitle, seoDescription, seoImage }: LayoutProps) =
         description={seoDescription}
         image={seoImage}
       />
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen overflow-x-hidden">
         <Navbar />
         <main className="flex-1 pt-[calc(6px+3.5rem)] xs:pt-[calc(6px+4rem)] md:pt-[calc(6px+5rem)]">
           {children}
