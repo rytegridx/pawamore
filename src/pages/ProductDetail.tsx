@@ -4,8 +4,10 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
-import { ShoppingCart, Share2, Copy, CheckCircle, ChevronLeft, Image as ImageIcon, Zap } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { ShoppingCart, Share2, Copy, CheckCircle, ChevronLeft, Image as ImageIcon, Zap, Star } from "lucide-react";
 import QuickBuyButton from "@/components/QuickBuyButton";
+import ProductReviews from "@/components/ProductReviews";
 import { toast } from "@/hooks/use-toast";
 import useSEO from "@/hooks/useSEO";
 
