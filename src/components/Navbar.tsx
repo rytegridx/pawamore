@@ -14,6 +14,7 @@ const navLinks = [
   { to: "/why-pawamore", label: "Why PawaMore" },
   { to: "/about", label: "About Us" },
   { to: "/blog", label: "Blog" },
+  { to: "/help", label: "Help" },
   { to: "/contact", label: "Contact" },
 ];
 
