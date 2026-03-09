@@ -129,7 +129,7 @@ const ProductDetail = () => {
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {images.map((img: any, i: number) => (
                   <button key={img.id} onClick={() => setSelectedImage(i)}
-                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 ${i === selectedImage ? "border-primary" : "border-border"}`}>
+                    className={`w-20 h-20 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 ${i === selectedImage ? "border-primary" : "border-border"}`}>
                     <img src={img.image_url} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
