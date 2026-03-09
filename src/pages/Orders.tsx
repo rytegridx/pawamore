@@ -161,10 +161,17 @@ const Orders = () => {
                         <span className="font-semibold">₦{(Number(item.unit_price) * item.quantity).toLocaleString()}</span>
                       </div>
                     ))}
-                    <div className="mt-3 pt-3 border-t border-border flex justify-end">
-                      <Button variant="outline" size="sm" onClick={() => handlePrint(order)} className="gap-2">
-                        <Printer className="w-3.5 h-3.5" /> Print Receipt
-                      </Button>
+                    <div className="mt-3 pt-3 border-t border-border flex justify-between items-center">
+                      {(order.status === "pending" || order.status === "confirmed") && (
+                        <Button variant="destructive" size="sm" onClick={() => cancelOrder(order.id)} className="gap-1.5">
+                          <XCircle className="w-3.5 h-3.5" /> Cancel Order
+                        </Button>
+                      )}
+                      <div className="ml-auto">
+                        <Button variant="outline" size="sm" onClick={() => handlePrint(order)} className="gap-2">
+                          <Printer className="w-3.5 h-3.5" /> Print Receipt
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
