@@ -211,7 +211,7 @@ const Index = () => {
 
           {/* Mobile: horizontal scroll strip */}
           <div className="mt-8 sm:mt-12 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-8">
-            <MobileScrollSection showSwipeHint={true} showDots={true} showArrows={false}>
+            <MobileScrollSection showSwipeHint={true} showDots={true} showArrows={false} indicatorStyle="dots">
               {steps.map((step, i) => (
                 <ScrollReveal key={i} delay={i * 100}>
                   <div className="relative text-center group">
@@ -245,7 +245,7 @@ const Index = () => {
 
           {/* Mobile: horizontal scroll, Desktop: grid */}
           <div className="mt-8 sm:mt-12 sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-8">
-            <MobileScrollSection showSwipeHint={true} showDots={true} showArrows={true}>
+            <MobileScrollSection showSwipeHint={false} showDots={true} showArrows={false} indicatorStyle="bar">
               {products.map((product, i) => (
                 <ScrollReveal key={i} delay={i * 150}>
                   <div className={`relative rounded-2xl overflow-hidden border-2 transition-all duration-300 h-full ${
@@ -298,7 +298,7 @@ const Index = () => {
           </ScrollReveal>
 
           <div className="mt-8 sm:mt-12 sm:grid sm:grid-cols-3 sm:gap-8">
-            <MobileScrollSection showSwipeHint={true} showDots={true} showArrows={true}>
+            <MobileScrollSection showSwipeHint={false} showDots={true} showArrows={true} indicatorStyle="counter">
               {testimonials.map((t, i) => (
                 <ScrollReveal key={i} delay={i * 150}>
                   <div className="bg-primary-foreground/5 backdrop-blur-sm border border-primary-foreground/10 rounded-2xl p-5 sm:p-8 h-full">
