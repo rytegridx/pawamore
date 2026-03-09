@@ -19,8 +19,30 @@ const Checkout = () => {
   const [flwPublicKey, setFlwPublicKey] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", city: "", state: "", notes: "" });
 
+  // Pre-fill form from user profile
   useEffect(() => {
-    if (user?.email) setForm(f => ({ ...f, email: f.email || user.email || "" }));
+    if (user?.email) {
+      setForm(f => ({ ...f, email: f.email || user.email || "" }));
+      
+      // Fetch and pre-fill delivery info from profile
+      supabase
+        .from("profiles")
+        .select("display_name, phone, address, city, state")
+        .eq("user_id", user.id)
+        .single()
+        .then(({ data, error }) => {
+          if (data && !error) {
+            setForm(f => ({
+              ...f,
+              name: f.name || data.display_name || "",
+              phone: f.phone || data.phone || "",
+              address: f.address || data.address || "",
+              city: f.city || data.city || "",
+              state: f.state || data.state || "",
+            }));
+          }
+        });
+    }
   }, [user]);
 
   useEffect(() => {
