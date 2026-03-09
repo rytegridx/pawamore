@@ -78,6 +78,7 @@ const Shop = () => {
   const primaryImage = (p: Product) => p.product_images?.find((i) => i.is_primary)?.image_url || p.product_images?.[0]?.image_url;
 
   return (
+    <ErrorBoundary>
     <Layout>
       {/* Header */}
       <section className="relative py-6 sm:py-10 lg:py-14" style={{ background: "var(--gradient-hero)" }}>
