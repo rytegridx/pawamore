@@ -85,15 +85,23 @@ const Navbar = () => {
               <User className="w-4 h-4 mr-1" /> Login
             </Button>
            )}
-           <Link to="/contact">
-             <Button variant="amber" size="default">Book Free Power Audit →</Button>
+           <Link to="/contact" className="hidden xl:block">
+             <Button variant="amber" size="default" className="text-sm">Book Free Power Audit →</Button>
            </Link>
          </div>
 
-        {/* Mobile toggle */}
-        <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-primary-foreground p-2" aria-label="Toggle menu">
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        {/* Mobile Cart & Toggle */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <Link to="/cart" className="relative text-primary-foreground/80 hover:text-accent p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
+            <ShoppingCart className="w-5 h-5" />
+            {itemCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-accent text-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{itemCount}</span>
+            )}
+          </Link>
+          <button onClick={() => setIsOpen(!isOpen)} className="text-primary-foreground p-2 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Toggle menu">
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
