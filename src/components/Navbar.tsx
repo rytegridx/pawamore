@@ -20,8 +20,15 @@ const navLinks = [
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
   const { itemCount } = useCart();
+
+  const handleLoginClick = () => {
+    // Save current page to return after login
+    sessionStorage.setItem("intendedPath", location.pathname + location.search);
+    navigate("/login");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-forest/95 backdrop-blur-md">
