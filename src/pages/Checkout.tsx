@@ -168,23 +168,23 @@ const Checkout = () => {
           </div>
 
           {/* Payment Method */}
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="font-display font-bold text-lg mb-4">Payment Method</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
+            <h2 className="font-display font-bold text-base sm:text-lg lg:text-xl mb-3 sm:mb-4">Payment Method</h2>
+            <div className="grid grid-cols-1 gap-3">
               <button type="button" onClick={() => setPaymentMethod("pay_on_delivery")}
-                className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${paymentMethod === "pay_on_delivery" ? "border-accent bg-accent/5" : "border-border hover:border-muted-foreground/30"}`}>
-                <Truck className={`w-6 h-6 ${paymentMethod === "pay_on_delivery" ? "text-accent" : "text-muted-foreground"}`} />
+                className={`flex items-center gap-3 p-3 sm:p-4 rounded-xl border-2 transition-all text-left min-h-[60px] ${paymentMethod === "pay_on_delivery" ? "border-accent bg-accent/5" : "border-border hover:border-muted-foreground/30"}`}>
+                <Truck className={`w-5 sm:w-6 h-5 sm:h-6 flex-shrink-0 ${paymentMethod === "pay_on_delivery" ? "text-accent" : "text-muted-foreground"}`} />
                 <div>
-                  <p className="font-display font-bold text-sm">Pay on Delivery</p>
-                  <p className="text-xs text-muted-foreground">Cash or bank transfer</p>
+                  <p className="font-display font-bold text-sm sm:text-base">Pay on Delivery</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Cash or bank transfer</p>
                 </div>
               </button>
               <button type="button" onClick={() => setPaymentMethod("flutterwave")} disabled={!flwPublicKey}
-                className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${paymentMethod === "flutterwave" ? "border-accent bg-accent/5" : "border-border hover:border-muted-foreground/30"} ${!flwPublicKey ? "opacity-50 cursor-not-allowed" : ""}`}>
-                <CreditCard className={`w-6 h-6 ${paymentMethod === "flutterwave" ? "text-accent" : "text-muted-foreground"}`} />
+                className={`flex items-center gap-3 p-3 sm:p-4 rounded-xl border-2 transition-all text-left min-h-[60px] ${paymentMethod === "flutterwave" ? "border-accent bg-accent/5" : "border-border hover:border-muted-foreground/30"} ${!flwPublicKey ? "opacity-50 cursor-not-allowed" : ""}`}>
+                <CreditCard className={`w-5 sm:w-6 h-5 sm:h-6 flex-shrink-0 ${paymentMethod === "flutterwave" ? "text-accent" : "text-muted-foreground"}`} />
                 <div>
-                  <p className="font-display font-bold text-sm">Pay Online</p>
-                  <p className="text-xs text-muted-foreground">Card, bank transfer, USSD</p>
+                  <p className="font-display font-bold text-sm sm:text-base">Pay Online</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Card, bank transfer, USSD</p>
                 </div>
               </button>
             </div>
