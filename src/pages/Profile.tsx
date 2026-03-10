@@ -272,9 +272,10 @@ const Profile = () => {
           </div>
 
           <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="orders">Orders</TabsTrigger>
+              <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
               <TabsTrigger value="security">Security</TabsTrigger>
             </TabsList>
 
@@ -483,6 +484,28 @@ const Profile = () => {
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="wishlist" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShoppingBag className="w-5 h-5" />
+                    My Wishlist
+                  </CardTitle>
+                  <CardDescription>
+                    Your saved favorite products
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center py-6">
+                  <Link to="/wishlist">
+                    <Button variant="amber" className="gap-2">
+                      <Eye className="w-4 h-4" />
+                      View Full Wishlist
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </TabsContent>

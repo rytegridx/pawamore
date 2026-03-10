@@ -15,6 +15,9 @@ import {
 } from "lucide-react";
 import SupportTicketManagement from "@/components/admin/SupportTicketManagement";
 import FAQManagement from "@/components/admin/FAQManagement";
+import SalesAnalytics from "@/components/admin/SalesAnalytics";
+import CustomerManagement from "@/components/admin/CustomerManagement";
+import NewsletterComposer from "@/components/admin/NewsletterComposer";
 import logo from "@/assets/logo.png";
 
 interface Product {
@@ -93,7 +96,7 @@ const orderStatuses = ["pending", "confirmed", "processing", "shipped", "deliver
 const AdminDashboard = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "orders" | "reviews" | "newsletter">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "orders" | "reviews" | "newsletter" | "customers">("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -263,6 +266,9 @@ const AdminDashboard = () => {
             <TabsTrigger value="newsletter" className="text-xs sm:text-sm whitespace-nowrap">
               <Mail className="w-3.5 h-3.5 mr-1" />Newsletter
             </TabsTrigger>
+            <TabsTrigger value="customers" className="text-xs sm:text-sm whitespace-nowrap">
+              <Users className="w-3.5 h-3.5 mr-1" />Customers
+            </TabsTrigger>
             <TabsTrigger value="support" className="text-xs sm:text-sm whitespace-nowrap">
               <Ticket className="w-3.5 h-3.5 mr-1" />Support
             </TabsTrigger>
@@ -271,30 +277,8 @@ const AdminDashboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="bg-card border border-border rounded-xl p-4">
-                <Package className="w-5 h-5 text-primary mb-2" />
-                <p className="font-display font-extrabold text-xl sm:text-2xl">{products.length}</p>
-                <p className="text-xs text-muted-foreground">Total Products</p>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-4">
-                <ShoppingBag className="w-5 h-5 text-primary mb-2" />
-                <p className="font-display font-extrabold text-xl sm:text-2xl">{orders.length}</p>
-                <p className="text-xs text-muted-foreground">Total Orders</p>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-4">
-                <DollarSign className="w-5 h-5 text-accent mb-2" />
-                <p className="font-display font-extrabold text-lg sm:text-xl">₦{(totalRevenue / 1000).toFixed(0)}k</p>
-                <p className="text-xs text-muted-foreground">Revenue</p>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-4">
-                <Users className="w-5 h-5 text-blue-500 mb-2" />
-                <p className="font-display font-extrabold text-xl sm:text-2xl">{activeNewsletters}</p>
-                <p className="text-xs text-muted-foreground">Subscribers</p>
-              </div>
-            </div>
+            <SalesAnalytics orders={orders} />
 
             {/* Alerts */}
             <div className="space-y-3">
@@ -325,26 +309,6 @@ const AdminDashboard = () => {
                   <p className="text-sm font-medium">All clear! No pending actions.</p>
                 </div>
               )}
-            </div>
-
-            {/* Quick order status breakdown */}
-            <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
-              <h3 className="font-display font-bold mb-4">Orders by Status</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {orderStatuses.map(status => {
-                  const count = orders.filter(o => o.status === status).length;
-                  const StatusIcon = statusIcons[status] || Clock;
-                  return (
-                    <div key={status} className="p-3 bg-secondary rounded-lg flex items-center gap-3">
-                      <StatusIcon className="w-4 h-4 text-muted-foreground" />
-                      <div>
-                        <p className="font-bold text-sm">{count}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{status}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Recent orders */}
@@ -604,49 +568,52 @@ const AdminDashboard = () => {
             )}
           </TabsContent>
 
-          {/* Newsletter Tab */}
+          {/* Old newsletter tab removed - replaced by new one below */}
+
+          {/* Newsletter Tab - add composer above subscriber list */}
           <TabsContent value="newsletter">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg sm:text-xl font-extrabold">Newsletter Subscribers</h2>
-              <div className="text-sm text-muted-foreground">
-                {activeNewsletters} active / {newsletters.length} total
+            <div className="space-y-6">
+              <NewsletterComposer subscribers={newsletters} />
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-extrabold">Subscribers</h2>
+                <span className="text-sm text-muted-foreground">{activeNewsletters} active / {newsletters.length} total</span>
               </div>
-            </div>
-            {newsletters.length === 0 ? (
-              <div className="text-center py-16">
-                <Mail className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                <p className="text-muted-foreground">No subscribers yet.</p>
-              </div>
-            ) : (
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-secondary border-b border-border">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Email</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase hidden sm:table-cell">Source</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase hidden md:table-cell">Date</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {newsletters.map(sub => (
-                        <tr key={sub.id} className="border-b border-border last:border-0 hover:bg-secondary/20 transition-colors">
-                          <td className="px-4 py-3 font-medium">{sub.email}</td>
-                          <td className="px-4 py-3 text-muted-foreground capitalize hidden sm:table-cell">{sub.source || "website"}</td>
-                          <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{new Date(sub.subscribed_at).toLocaleDateString()}</td>
-                          <td className="px-4 py-3">
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${sub.is_active ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
-                              {sub.is_active ? "Active" : "Inactive"}
-                            </span>
-                          </td>
+              {newsletters.length > 0 && (
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-secondary border-b border-border">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Email</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase hidden sm:table-cell">Source</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase hidden md:table-cell">Date</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {newsletters.map(sub => (
+                          <tr key={sub.id} className="border-b border-border last:border-0 hover:bg-secondary/20">
+                            <td className="px-4 py-3 font-medium">{sub.email}</td>
+                            <td className="px-4 py-3 text-muted-foreground capitalize hidden sm:table-cell">{sub.source || "website"}</td>
+                            <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{new Date(sub.subscribed_at).toLocaleDateString()}</td>
+                            <td className="px-4 py-3">
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${sub.is_active ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                                {sub.is_active ? "Active" : "Inactive"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Customers Tab */}
+          <TabsContent value="customers">
+            <CustomerManagement />
           </TabsContent>
 
           {/* Support Tickets Tab */}
