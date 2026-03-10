@@ -148,7 +148,7 @@ const QuickBuyButton = ({ product, size = "default", className = "" }: QuickBuyB
             if (user) {
               navigate("/orders");
             } else {
-              navigate(`/order-lookup?email=${encodeURIComponent(form.email)}&order=${order.id}`);
+              navigate(`/order-lookup?email=${encodeURIComponent(form.email)}&order=${orderId}`);
             }
           },
         });
