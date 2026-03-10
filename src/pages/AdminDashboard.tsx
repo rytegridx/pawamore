@@ -266,6 +266,9 @@ const AdminDashboard = () => {
             <TabsTrigger value="newsletter" className="text-xs sm:text-sm whitespace-nowrap">
               <Mail className="w-3.5 h-3.5 mr-1" />Newsletter
             </TabsTrigger>
+            <TabsTrigger value="customers" className="text-xs sm:text-sm whitespace-nowrap">
+              <Users className="w-3.5 h-3.5 mr-1" />Customers
+            </TabsTrigger>
             <TabsTrigger value="support" className="text-xs sm:text-sm whitespace-nowrap">
               <Ticket className="w-3.5 h-3.5 mr-1" />Support
             </TabsTrigger>
