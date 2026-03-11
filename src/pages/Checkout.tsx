@@ -270,12 +270,17 @@ const Checkout = () => {
     try {
       const orderId = await createOrder();
 
+      // Send receipt email in the background
+      supabase.functions.invoke("send-order-receipt", {
+        body: { order_id: orderId },
+      }).catch(console.error);
+
       if (paymentMethod === "flutterwave") {
         await handleFlutterwavePayment(orderId);
         setSubmitting(false);
       } else {
         await clearCart();
-        toast({ title: "Order placed successfully! 🎉", description: "We'll contact you shortly to confirm." });
+        toast({ title: "Order placed successfully! 🎉", description: "Receipt sent to your email." });
         navigate("/orders");
       }
     } catch (err: any) {
