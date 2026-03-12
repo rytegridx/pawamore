@@ -174,10 +174,12 @@ const QuickBuyButton = ({ product, size = "default", className = "" }: QuickBuyB
         variant="forest"
         size={size}
         onClick={handleQuickBuy}
-        className={`gap-1.5 ${className}`}
+        className={`gap-1 ${className}`}
         disabled={submitting}
+        aria-label="Quick Buy"
       >
-        <Zap className="w-3.5 h-3.5" /> Quick Buy
+        <Zap className="w-3.5 h-3.5 shrink-0" />
+        <span className="hidden sm:inline">Quick Buy</span>
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
