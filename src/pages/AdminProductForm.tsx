@@ -36,6 +36,7 @@ const AdminProductForm = () => {
 
   useEffect(() => {
     fetchCategories();
+    fetchBrands();
     if (isEditing) fetchProduct();
   }, [isEditing]);
 
