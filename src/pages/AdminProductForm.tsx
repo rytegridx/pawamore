@@ -24,7 +24,7 @@ const AdminProductForm = () => {
   const [videos, setVideos] = useState<{ id?: string; video_url: string; thumbnail_url?: string; sort_order: number }[]>([]);
 
   const [form, setForm] = useState({
-    name: "", slug: "", category_id: "", description: "", short_description: "",
+    name: "", slug: "", category_id: "", brand_id: "", description: "", short_description: "",
     price: "", discount_price: "", powers: "", ideal_for: "", promo_label: "",
     stock_quantity: "0", status: "active", is_featured: false, is_popular: false,
     specs: "",
