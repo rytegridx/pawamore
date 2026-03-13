@@ -45,6 +45,11 @@ const AdminProductForm = () => {
     setCategories((data as any) || []);
   };
 
+  const fetchBrands = async () => {
+    const { data } = await supabase.from("brands").select("id, name, slug").order("name");
+    setBrands((data as any) || []);
+  };
+
   const fetchProduct = async () => {
     const { data } = await supabase.from("products").select("*, product_images(id, image_url, is_primary, sort_order), product_videos(id, video_url, thumbnail_url, sort_order)").eq("id", id!).single();
     if (data) {
