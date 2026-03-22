@@ -11,13 +11,14 @@ import {
   Plus, Edit, Trash2, Image as ImageIcon, Package, LogOut, Eye,
   ShoppingBag, Users, DollarSign, ChevronDown, ChevronUp, Bell,
   Mail, Star, TrendingUp, AlertTriangle, CheckCircle, Clock, XCircle,
-  Ticket, HelpCircle
+  Ticket, HelpCircle, Link2
 } from "lucide-react";
 import SupportTicketManagement from "@/components/admin/SupportTicketManagement";
 import FAQManagement from "@/components/admin/FAQManagement";
 import SalesAnalytics from "@/components/admin/SalesAnalytics";
 import CustomerManagement from "@/components/admin/CustomerManagement";
 import NewsletterComposer from "@/components/admin/NewsletterComposer";
+import ProductImportModal from "@/components/admin/ProductImportModal";
 import logo from "@/assets/logo.png";
 
 interface Product {
@@ -106,6 +107,7 @@ const AdminDashboard = () => {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serverVerifiedAdmin, setServerVerifiedAdmin] = useState<boolean | null>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // Server-side admin verification — prevents DevTools bypass
   useEffect(() => {
@@ -338,9 +340,14 @@ const AdminDashboard = () => {
           <TabsContent value="products">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg sm:text-xl font-extrabold">All Products</h2>
-              <Link to="/admin/products/new">
-                <Button variant="amber" size="sm"><Plus className="w-4 h-4 mr-1" /> Add Product</Button>
-              </Link>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)} className="gap-1">
+                  <Link2 className="w-4 h-4" /> Import from URL
+                </Button>
+                <Link to="/admin/products/new">
+                  <Button variant="amber" size="sm"><Plus className="w-4 h-4 mr-1" /> Add Manually</Button>
+                </Link>
+              </div>
             </div>
 
             {loadingData ? (
@@ -628,6 +635,13 @@ const AdminDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Product Import Modal */}
+      <ProductImportModal
+        open={importModalOpen}
+        onOpenChange={setImportModalOpen}
+        onSuccess={fetchProducts}
+      />
     </div>
   );
 };

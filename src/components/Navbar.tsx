@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Shield, ShoppingCart, Heart, Settings, ChevronDown } from "lucide-react";
+import { Menu, X, User, LogOut, Shield, ShoppingCart, Heart, Settings, ChevronDown, Calculator, HelpCircle } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,15 +14,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import logo from "@/assets/logo.png";
 
+// Main navigation links - streamlined
 const navLinks = [
   { to: "/", label: "Home" },
-  { to: "/services", label: "Services" },
-  { to: "/products", label: "Products" },
-  { to: "/why-pawamore", label: "Why PawaMore" },
-  { to: "/about", label: "About Us" },
-  { to: "/blog", label: "Blog" },
-  { to: "/help", label: "Help" },
-  { to: "/contact", label: "Contact" },
+  { to: "/shop", label: "Shop" },
+  { to: "/why-pawamore", label: "Why Us" },
+  { to: "/about", label: "About" },
+];
+
+// Resources dropdown
+const resourcesLinks = [
+  { to: "/solar-calculator", label: "Solar Calculator", icon: Calculator },
+  { to: "/blog", label: "Blog & Guides" },
+  { to: "/faqs", label: "FAQs" },
+  { to: "/help", label: "Help Center", icon: HelpCircle },
+  { to: "/contact", label: "Contact Us" },
 ];
 
 const Navbar = () => {
@@ -59,6 +65,26 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
+          
+          {/* Resources Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-primary-foreground/80 hover:text-accent gap-1 px-3">
+                Resources
+                <ChevronDown className="w-3 h-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {resourcesLinks.map((link) => (
+                <DropdownMenuItem key={link.to} asChild className="cursor-pointer">
+                  <Link to={link.to} className="flex items-center gap-2 w-full">
+                    {link.icon && <link.icon className="w-4 h-4 text-amber" />}
+                    {link.label}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Desktop CTA / Auth — grouped into dropdown */}
@@ -110,7 +136,7 @@ const Navbar = () => {
             </Button>
            )}
            <Link to="/contact" className="hidden xl:block">
-             <Button variant="amber" size="default" className="text-sm">Book Free Power Audit →</Button>
+             <Button variant="amber" size="default" className="text-sm font-semibold">Get Free Quote</Button>
            </Link>
          </div>
 
@@ -149,6 +175,20 @@ const Navbar = () => {
                   </Link>
                 </motion.div>
               ))}
+
+              {/* Resources section in mobile */}
+              <div className="border-t border-primary-foreground/10 mt-2 pt-2">
+                <p className="text-xs uppercase text-primary-foreground/50 px-4 mb-2 font-semibold tracking-wider">Resources</p>
+                {resourcesLinks.map((link, i) => (
+                  <motion.div key={link.to} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (navLinks.length + i) * 0.05 }}>
+                    <Link to={link.to} onClick={() => setIsOpen(false)}
+                      className="block px-4 py-3 rounded-lg text-base font-medium text-primary-foreground/80 hover:bg-primary/20 min-h-[44px] flex items-center gap-2">
+                      {link.icon && <link.icon className="w-4 h-4 text-amber" />}
+                      {link.label}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
 
               {/* Auth links mobile */}
               <div className="border-t border-primary-foreground/10 mt-2 pt-2">

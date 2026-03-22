@@ -104,11 +104,12 @@ const WishlistButton = ({
           description: `${productName} saved to your favorites` 
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Wishlist toggle error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to update wishlist";
       toast({ 
         title: "Failed to update wishlist", 
-        description: error.message,
+        description: errorMessage,
         variant: "destructive" 
       });
     } finally {

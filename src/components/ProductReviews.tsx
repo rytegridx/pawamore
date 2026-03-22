@@ -183,11 +183,12 @@ const ProductReviews = ({ productId, productName, reviews, averageRating, totalR
       resetForm();
       setIsDialogOpen(false);
       onReviewAdded();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         toast({ title: "Validation Error", description: error.errors[0].message, variant: "destructive" });
       } else {
-        toast({ title: "Failed to submit review", description: error.message, variant: "destructive" });
+        const errorMessage = error instanceof Error ? error.message : "Failed to submit review";
+        toast({ title: "Failed to submit review", description: errorMessage, variant: "destructive" });
       }
     } finally {
       setSubmitting(false);
@@ -206,7 +207,7 @@ const ProductReviews = ({ productId, productName, reviews, averageRating, totalR
   };
 
   const handleDeleteImage = async (imageId: string) => {
-    const { error } = await supabase.from("review_images" as any).delete().eq("id", imageId);
+    const { error } = await supabase.from("review_images").delete().eq("id", imageId);
     if (!error) {
       onReviewAdded();
       toast({ title: "Image removed" });
