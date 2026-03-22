@@ -6,14 +6,23 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Compact the HTML to keep the AI prompt within token limits
-function compactHtml(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/\s{2,}/g, " ")
-    .slice(0, 40000); // cap at ~40 k chars
+// Compact the HTML to keep the AI prompt within token limits.
+// This output is sent only to the AI API and is NEVER rendered in a browser.
+// We apply each replacement repeatedly until no more matches remain to avoid
+// re-introduced partial tags from nested/malformed markup.
+function compactHtml(raw: string): string {
+  const removeAll = (src: string, pattern: RegExp): string => {
+    let prev = src;
+    let cur = src.replace(pattern, "");
+    while (cur !== prev) { prev = cur; cur = cur.replace(pattern, ""); }
+    return cur;
+  };
+
+  let text = removeAll(raw, /<script\b[^>]*>[\s\S]*?<\/script[^>]*>/gi);
+  text = removeAll(text, /<style\b[^>]*>[\s\S]*?<\/style[^>]*>/gi);
+  text = removeAll(text, /<!--[\s\S]*?-->/g);
+  text = text.replace(/\s{2,}/g, " ");
+  return text.slice(0, 40000);
 }
 
 function slugify(text: string): string {
