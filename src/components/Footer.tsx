@@ -8,12 +8,12 @@ const Footer = () => {
   return (
     <footer className="bg-forest text-primary-foreground relative">
       {/* Mascot sitting on top of footer */}
-      <div className="absolute left-1/2 -translate-x-1/2 -top-20 sm:-top-28 md:-top-36 z-20 pointer-events-none select-none">
+      <div className="absolute left-1/2 -translate-x-1/2 -top-10 sm:-top-14 md:-top-18 z-20 pointer-events-none select-none">
         <img 
           src={mascotFooter} 
           alt="" 
           aria-hidden="true"
-          className="w-28 sm:w-40 md:w-52 h-auto drop-shadow-xl"
+          className="w-14 sm:w-20 md:w-26 h-auto drop-shadow-xl"
         />
       </div>
       <div className="kente-strip" />
@@ -69,6 +69,7 @@ const Footer = () => {
                 { to: "/services", label: "Services" },
                 { to: "/products", label: "Products" },
                 { to: "/shop", label: "Shop" },
+                { to: "/solar-calculator", label: "Solar Calculator" },
                 { to: "/why-pawamore", label: "Why PawaMore" },
                 { to: "/about", label: "About Us" },
                 { to: "/faqs", label: "FAQs" }].

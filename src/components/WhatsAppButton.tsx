@@ -22,10 +22,25 @@ const WhatsAppButton = ({
   variant = "outline",
   iconOnly = false,
 }: WhatsAppButtonProps) => {
+  // Format price with Naira symbol
+  const formattedPrice = productPrice 
+    ? `₦${Number(productPrice).toLocaleString('en-NG')}` 
+    : null;
+
+  // Create a well-formatted WhatsApp message
   const message = encodeURIComponent(
-    `Hi PawaMore! 👋\n\nI'm interested in: *${productName}*${
-      productPrice ? `\nPrice: ₦${Number(productPrice).toLocaleString()}` : ""
-    }${productUrl ? `\n\n${productUrl}` : ""}\n\nPlease share more details. Thank you!`
+    `🛒 *PawaMore Product Inquiry*\n\n` +
+    `Product: *${productName}*\n` +
+    `${formattedPrice ? `Price: ${formattedPrice}\n` : ''}` +
+    `${productUrl ? `\n🔗 Product Link:\n${productUrl}\n` : ''}` +
+    `\n━━━━━━━━━━━━━━━\n` +
+    `Hello PawaMore team! 👋\n\n` +
+    `I'm interested in this product and would like more information about:\n` +
+    `• Product availability\n` +
+    `• Delivery timeline\n` +
+    `• Installation support\n` +
+    `• Payment options\n\n` +
+    `Looking forward to your response!`
   );
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;

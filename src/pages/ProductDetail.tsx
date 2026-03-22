@@ -28,14 +28,82 @@ const ProductDetail = () => {
   const images = product?.product_images?.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)) || [];
   const primaryImage = images.find((i: any) => i.is_primary)?.image_url || images[0]?.image_url;
   const productUrl = typeof window !== "undefined" ? window.location.href : "";
+  
+  // Format price for display
+  const displayPrice = product?.discount_price || product?.price;
+  const formattedPrice = displayPrice ? `₦${Number(displayPrice).toLocaleString('en-NG')}` : '';
+  
+  // Create rich description for social sharing
+  const socialDescription = product 
+    ? `${product.short_description || product.name} | ${formattedPrice} | Available at PawaMore Systems. ${product.stock_quantity > 0 ? '✅ In Stock' : '⏳ Pre-order'}. Free delivery in Lagos.`
+    : "Quality solar and battery solutions at PawaMore Systems Nigeria";
+  
+  // Product availability for schema
+  const availability = product?.stock_quantity > 0 ? "in stock" : "out of stock";
 
   useSEO({
-    title: product ? `${product.name} — PawaMore Systems` : "Product — PawaMore Systems",
-    description: product?.short_description || "View product details at PawaMore Systems Nigeria",
+    title: product ? `${product.name} - ${formattedPrice} | PawaMore` : "Product | PawaMore Systems",
+    description: socialDescription,
     image: primaryImage || undefined,
     url: productUrl,
     type: "product",
+    price: displayPrice,
+    availability: availability,
   });
+
+  // Add Product Schema JSON-LD for rich snippets
+  useEffect(() => {
+    if (!product) return;
+
+    const schema = {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": product.name,
+      "image": primaryImage || "",
+      "description": product.short_description || product.description || "",
+      "brand": {
+        "@type": "Brand",
+        "name": product.brand || "PawaMore"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": productUrl,
+        "priceCurrency": "NGN",
+        "price": displayPrice,
+        "priceValidUntil": new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        "availability": product.stock_quantity > 0 
+          ? "https://schema.org/InStock" 
+          : "https://schema.org/OutOfStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "PawaMore Systems"
+        }
+      },
+      ...(reviewStats.total > 0 && {
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": reviewStats.average.toFixed(1),
+          "reviewCount": reviewStats.total,
+          "bestRating": "5",
+          "worstRating": "1"
+        }
+      })
+    };
+
+    let scriptTag = document.querySelector('script[type="application/ld+json"][data-product-schema]');
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.setAttribute('type', 'application/ld+json');
+      scriptTag.setAttribute('data-product-schema', 'true');
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.textContent = JSON.stringify(schema);
+
+    return () => {
+      const tag = document.querySelector('script[type="application/ld+json"][data-product-schema]');
+      if (tag) tag.remove();
+    };
+  }, [product, primaryImage, displayPrice, formattedPrice, productUrl, reviewStats]);
 
   const fetchProduct = async () => {
     if (!slug) return;

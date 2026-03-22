@@ -78,7 +78,7 @@ const QuickBuyButton = ({ product, size = "default", className = "" }: QuickBuyB
           shipping_address: form.address,
           shipping_city: form.city,
           payment_method: "flutterwave",
-        } as any).select("id").single();
+        }).select("id").single();
         if (error) throw error;
 
         await supabase.from("order_items").insert({
@@ -108,7 +108,7 @@ const QuickBuyButton = ({ product, size = "default", className = "" }: QuickBuyB
 
       // Launch Flutterwave (script might already be loaded)
       const launchFlutterwave = () => {
-        const FlutterwaveCheckout = (window as any).FlutterwaveCheckout;
+        const FlutterwaveCheckout = (window as Window & { FlutterwaveCheckout?: (config: Record<string, unknown>) => void }).FlutterwaveCheckout;
         if (!FlutterwaveCheckout) {
           toast({ title: "Payment failed to load", variant: "destructive" });
           setSubmitting(false);
@@ -127,7 +127,7 @@ const QuickBuyButton = ({ product, size = "default", className = "" }: QuickBuyB
             description: `Quick Buy: ${product.name}`,
             logo: window.location.origin + "/favicon.png",
           },
-          callback: async (response: any) => {
+          callback: async (response: { transaction_id: string }) => {
             const { data } = await supabase.functions.invoke("verify-payment", {
               body: { transaction_id: response.transaction_id, order_id: orderId },
             });
@@ -154,7 +154,7 @@ const QuickBuyButton = ({ product, size = "default", className = "" }: QuickBuyB
         });
       };
 
-      if ((window as any).FlutterwaveCheckout) {
+      if ((window as Window & { FlutterwaveCheckout?: unknown }).FlutterwaveCheckout) {
         launchFlutterwave();
       } else {
         const script = document.createElement("script");
@@ -162,8 +162,9 @@ const QuickBuyButton = ({ product, size = "default", className = "" }: QuickBuyB
         script.onload = launchFlutterwave;
         document.body.appendChild(script);
       }
-    } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to process order";
+      toast({ title: "Failed", description: errorMessage, variant: "destructive" });
       setSubmitting(false);
     }
   };
