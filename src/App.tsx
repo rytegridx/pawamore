@@ -31,6 +31,8 @@ import AdminProductForm from "./pages/AdminProductForm";
 import Profile from "./pages/Profile";
 import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
+import SolarCalculatorPage from "./pages/SolarCalculatorPage";
+import ScrollToTopButton from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +51,7 @@ const App = () => (
         <AuthProvider>
           <CartProvider>
             <ScrollToTop />
+            <ScrollToTopButton />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
@@ -61,6 +64,7 @@ const App = () => (
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/faqs" element={<FAQs />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/solar-calculator" element={<SolarCalculatorPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
