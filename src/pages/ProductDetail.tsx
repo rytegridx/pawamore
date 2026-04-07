@@ -29,6 +29,12 @@ const ProductDetail = () => {
   const primaryImage = images.find((i: any) => i.is_primary)?.image_url || images[0]?.image_url;
   const productUrl = typeof window !== "undefined" ? window.location.href : "";
   
+  // OG proxy URL for social sharing — crawlers read this and get product-specific meta tags
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const shareUrl = product?.slug 
+    ? `${supabaseUrl}/functions/v1/og-image-proxy?slug=${encodeURIComponent(product.slug)}`
+    : productUrl;
+  
   // Format price for display
   const displayPrice = product?.discount_price || product?.price;
   const formattedPrice = displayPrice ? `₦${Number(displayPrice).toLocaleString('en-NG')}` : '';
@@ -152,9 +158,9 @@ const ProductDetail = () => {
 
   const handleShare = async () => {
     if (navigator.share) {
-      await navigator.share({ title: product?.name, text: product?.short_description || "", url: productUrl });
+      await navigator.share({ title: product?.name, text: product?.short_description || "", url: shareUrl });
     } else {
-      await navigator.clipboard.writeText(productUrl);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       toast({ title: "Link copied!" });
       setTimeout(() => setCopied(false), 2000);
@@ -162,7 +168,7 @@ const ProductDetail = () => {
   };
 
   const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(productUrl);
+    await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     toast({ title: "Link copied to clipboard!" });
     setTimeout(() => setCopied(false), 2000);
