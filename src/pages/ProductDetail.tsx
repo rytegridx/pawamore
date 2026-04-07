@@ -281,7 +281,7 @@ const ProductDetail = () => {
                 <WhatsAppButton
                   productName={product.name}
                   productPrice={price}
-                  productUrl={productUrl}
+                  productUrl={shareUrl}
                   size="default"
                   className="min-h-[40px] sm:min-h-[44px]"
                 />
