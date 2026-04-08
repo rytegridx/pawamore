@@ -5,6 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Common social media / SEO crawler user-agent patterns
+const CRAWLER_RE =
+  /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|telegrambot|twitterbot|linkedinbot|discordbot|pinterest|google|bing|yandex|baidu|duckduck|semrush|ahref|preview|fetch|curl|wget|headless/i;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -21,6 +25,18 @@ Deno.serve(async (req) => {
       });
     }
 
+    const productUrl = `https://pawamore.lovable.app/products/${encodeURIComponent(slug)}`;
+
+    // If the visitor is a real person (not a crawler), redirect immediately via 302
+    const ua = req.headers.get("user-agent") || "";
+    if (!CRAWLER_RE.test(ua)) {
+      return new Response(null, {
+        status: 302,
+        headers: { ...corsHeaders, Location: productUrl },
+      });
+    }
+
+    // --- Crawler path: serve rich OG meta tags ---
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -35,9 +51,10 @@ Deno.serve(async (req) => {
       .single();
 
     if (error || !product) {
-      return new Response(JSON.stringify({ error: "Product not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      // Product not found — redirect anyway
+      return new Response(null, {
+        status: 302,
+        headers: { ...corsHeaders, Location: productUrl },
       });
     }
 
@@ -47,7 +64,6 @@ Deno.serve(async (req) => {
     const formattedPrice = `₦${Number(displayPrice).toLocaleString("en-NG")}`;
     const availability = (product.stock_quantity ?? 0) > 0 ? "✅ In Stock" : "⏳ Pre-order";
     const description = `${product.short_description || product.name} | ${formattedPrice} | ${availability}. PawaMore Systems Nigeria.`;
-    const productUrl = `https://pawamore.lovable.app/products/${product.slug}`;
     const title = `${product.name} - ${formattedPrice} | PawaMore Systems`;
 
     const html = `<!DOCTYPE html>
@@ -95,8 +111,6 @@ Deno.serve(async (req) => {
     },
   })}
   </script>
-
-  <meta http-equiv="refresh" content="0;url=${escapeHtml(productUrl)}" />
 </head>
 <body>
   <p>Redirecting to <a href="${escapeHtml(productUrl)}">${escapeHtml(product.name)}</a>...</p>
