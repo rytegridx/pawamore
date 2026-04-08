@@ -1,4 +1,5 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+// Supabase Edge Function - runs on Deno runtime
+// Types are available globally in the Supabase Edge Functions environment
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
