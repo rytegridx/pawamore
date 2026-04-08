@@ -1,6 +1,6 @@
 # Cloudflare Worker OG Proxy Setup
 
-This guide will help you set up a custom domain (e.g., `share.pawamore.com`) that serves rich social previews while keeping your URLs clean.
+This guide will help you set up a free workers.dev URL (e.g., `pawamore-og.workers.dev`) that serves rich social previews while keeping your URLs clean. No custom domain needed!
 
 ## How It Works
 
@@ -50,73 +50,46 @@ This guide will help you set up a custom domain (e.g., `share.pawamore.com`) tha
 
 3. Click **Save**
 
-## Step 4: Set Up Custom Domain
+## Step 4: Get Your Worker URL
 
-### Option A: Use a Subdomain (Recommended)
-
-1. Go to your worker → **Settings** → **Triggers**
-2. Click **Add Custom Domain**
-3. Enter: `share.pawamore.com` (or `s.pawamore.com` for shorter)
-4. Cloudflare will guide you to add a CNAME record to your DNS
-
-**DNS Record to Add:**
+After deploying, your worker is available at:
 ```
-Type: CNAME
-Name: share (or s)
-Target: pawamore-og-proxy.<your-account>.workers.dev
+https://pawamore-og-proxy.<your-subdomain>.workers.dev
 ```
 
-### Option B: Use Workers.dev Subdomain (No DNS needed)
+Find your exact URL:
+1. Go to your worker dashboard
+2. Look at the **Preview** section - it shows your full URL
+3. Copy this URL (e.g., `https://pawamore-og-proxy.john123.workers.dev`)
 
-Your worker is already available at:
-```
-https://pawamore-og-proxy.<your-account>.workers.dev
-```
+## Step 5: Add Environment Variable to Your App
 
-You can use this URL directly, just not as clean.
+Add this environment variable in your v0 project settings (click Settings icon → Vars):
 
-## Step 5: Update Your App
+| Variable Name | Value |
+|--------------|-------|
+| `VITE_OG_PROXY_URL` | `https://pawamore-og-proxy.<your-subdomain>.workers.dev` |
 
-After setting up the custom domain, update the share URL in your app:
-
-### ProductCard.tsx
-```tsx
-// Change from:
-const shareUrl = `${supabaseUrl}/functions/v1/og-image-proxy?slug=${encodeURIComponent(product.slug)}`;
-
-// Change to:
-const shareUrl = `https://share.pawamore.com/products/${encodeURIComponent(product.slug)}`;
-```
-
-### ProductDetail.tsx
-```tsx
-// Change from:
-const shareUrl = product?.slug 
-  ? `${supabaseUrl}/functions/v1/og-image-proxy?slug=${encodeURIComponent(product.slug)}`
-  : productUrl;
-
-// Change to:
-const shareUrl = product?.slug 
-  ? `https://share.pawamore.com/products/${encodeURIComponent(product.slug)}`
-  : productUrl;
-```
+The app is already configured to use this variable. Once set, all share links will automatically use your worker URL.
 
 ## Testing
 
+Replace `YOUR_WORKER_URL` with your actual worker URL (e.g., `https://pawamore-og-proxy.john123.workers.dev`)
+
 ### Test with curl (simulating WhatsApp):
 ```bash
-curl -A "WhatsApp/2.0" "https://share.pawamore.com/products/itel-solar-gen"
+curl -A "WhatsApp/2.0" "YOUR_WORKER_URL/products/itel-solar-gen"
 ```
 Should return HTML with OG tags.
 
 ### Test as human:
 ```bash
-curl -I "https://share.pawamore.com/products/itel-solar-gen"
+curl -I "YOUR_WORKER_URL/products/itel-solar-gen"
 ```
 Should return `302 Found` with `Location: https://pawamore.lovable.app/products/itel-solar-gen`
 
 ### Test in WhatsApp:
-1. Send the share URL to yourself
+1. Send the worker URL + product path to yourself (e.g., `YOUR_WORKER_URL/products/some-product`)
 2. Should show rich preview with product image, name, price
 3. Click the link → opens clean pawamore.lovable.app URL
 
@@ -140,12 +113,13 @@ Cloudflare Workers free tier includes:
 - 100,000 requests/day
 - More than enough for social sharing
 
-## Alternative: Use workers.dev Directly
+## Optional: Custom Domain Later
 
-If you don't want to set up a custom domain, you can update the app to use the workers.dev URL:
+If you want a cleaner URL like `share.pawamore.com`, you can add a custom domain later:
 
-```tsx
-const shareUrl = `https://pawamore-og-proxy.<your-account>.workers.dev/products/${product.slug}`;
-```
+1. Go to your worker → **Settings** → **Triggers**
+2. Click **Add Custom Domain**
+3. Enter: `share.pawamore.com`
+4. Follow Cloudflare's DNS setup instructions
 
-Not as clean, but works immediately without DNS setup.
+Then update `VITE_OG_PROXY_URL` to `https://share.pawamore.com`.
