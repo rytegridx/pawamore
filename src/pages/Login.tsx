@@ -1,34 +1,67 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import useSEO from "@/hooks/useSEO";
 
 const Login = () => {
   useSEO({ title: "Login — PawaMore Systems", description: "Log in to your PawaMore Systems account." });
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      const intendedPath = sessionStorage.getItem("intendedPath") || "/";
+      sessionStorage.removeItem("intendedPath");
+      navigate(intendedPath, { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError(error.message);
-    } else {
-      // Redirect to intended path saved before redirect to login, or fall back to home
-      const intendedPath = sessionStorage.getItem("intendedPath") || "/";
-      sessionStorage.removeItem("intendedPath");
-      navigate(intendedPath, { replace: true });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        // Improve error messages for common issues
+        if (error.message.includes("Invalid login")) {
+          setError("Invalid email or password. Please check and try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          setError("Please verify your email address before logging in.");
+        } else {
+          setError(error.message);
+        }
+      }
+      // Navigation is handled by useEffect when user state changes
+    } catch (err: any) {
+      setError("Connection error. Please check your internet and try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-3"></div>
+            <p className="text-muted-foreground text-sm">Loading...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
