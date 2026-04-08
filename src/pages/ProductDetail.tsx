@@ -29,10 +29,11 @@ const ProductDetail = () => {
   const primaryImage = images.find((i: any) => i.is_primary)?.image_url || images[0]?.image_url;
   const productUrl = typeof window !== "undefined" ? window.location.href : "";
   
-  // OG proxy URL for social sharing — crawlers read this and get product-specific meta tags
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const shareUrl = product?.slug 
-    ? `${supabaseUrl}/functions/v1/og-image-proxy?slug=${encodeURIComponent(product.slug)}`
+  // OG proxy URL for social sharing - uses Cloudflare Worker
+  // Set VITE_OG_PROXY_URL in env after deploying the worker (e.g., https://pawamore-og.workers.dev)
+  const ogProxyUrl = import.meta.env.VITE_OG_PROXY_URL;
+  const shareUrl = product?.slug && ogProxyUrl
+    ? `${ogProxyUrl}/products/${encodeURIComponent(product.slug)}`
     : productUrl;
   
   // Format price for display
