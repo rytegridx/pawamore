@@ -135,7 +135,7 @@ const ProductDetail = () => {
     try {
       const { data: reviewsData } = await supabase
         .from("product_reviews")
-        .select(`id, user_id, rating, title, content, is_approved, created_at, profiles(display_name)`)
+        .select(`id, user_id, rating, title, content, is_approved, created_at`)
         .eq("product_id", productId)
         .eq("is_approved", true)
         .order("created_at", { ascending: false });
