@@ -38,51 +38,90 @@ const CartContext = createContext<CartContextType>({
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchCart = useCallback(async () => {
-    if (!user) { setItems([]); return; }
+    if (authLoading) return; // Wait for auth to be ready
+    if (!user) { 
+      setItems([]); 
+      setLoading(false);
+      return; 
+    }
     setLoading(true);
-    const { data } = await supabase
-      .from("cart_items")
-      .select("id, product_id, quantity, products(name, slug, price, discount_price, stock_quantity, product_images(image_url, is_primary))")
-      .eq("user_id", user.id);
-    setItems((data as any) || []);
-    setLoading(false);
-  }, [user]);
+    try {
+      const { data, error } = await supabase
+        .from("cart_items")
+        .select("id, product_id, quantity, products(name, slug, price, discount_price, stock_quantity, product_images(image_url, is_primary))")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setItems((data as any) || []);
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, authLoading]);
 
   useEffect(() => { fetchCart(); }, [fetchCart]);
 
   const addToCart = async (productId: string) => {
-    if (!user) { toast({ title: "Please log in", description: "You need to log in to add items to cart.", variant: "destructive" }); return; }
-    const existing = items.find(i => i.product_id === productId);
-    if (existing) {
-      await supabase.from("cart_items").update({ quantity: existing.quantity + 1 }).eq("id", existing.id);
-    } else {
-      await supabase.from("cart_items").insert({ user_id: user.id, product_id: productId, quantity: 1 });
+    if (!user) { 
+      toast({ title: "Please log in", description: "You need to log in to add items to cart.", variant: "destructive" }); 
+      return; 
     }
-    await fetchCart();
-    toast({ title: "Added to cart ✓" });
+    try {
+      const existing = items.find(i => i.product_id === productId);
+      if (existing) {
+        const { error } = await supabase.from("cart_items").update({ quantity: existing.quantity + 1 }).eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("cart_items").insert({ user_id: user.id, product_id: productId, quantity: 1 });
+        if (error) throw error;
+      }
+      await fetchCart();
+      toast({ title: "Added to cart" });
+    } catch (error: any) {
+      console.error("Add to cart error:", error);
+      toast({ title: "Failed to add item", description: error.message || "Please try again", variant: "destructive" });
+    }
   };
 
   const removeFromCart = async (productId: string) => {
     if (!user) return;
-    await supabase.from("cart_items").delete().eq("user_id", user.id).eq("product_id", productId);
-    await fetchCart();
+    try {
+      const { error } = await supabase.from("cart_items").delete().eq("user_id", user.id).eq("product_id", productId);
+      if (error) throw error;
+      await fetchCart();
+    } catch (error: any) {
+      console.error("Remove from cart error:", error);
+      toast({ title: "Failed to remove item", description: error.message || "Please try again", variant: "destructive" });
+    }
   };
 
   const updateQuantity = async (productId: string, quantity: number) => {
     if (!user || quantity < 1) return;
-    await supabase.from("cart_items").update({ quantity }).eq("user_id", user.id).eq("product_id", productId);
-    await fetchCart();
+    try {
+      const { error } = await supabase.from("cart_items").update({ quantity }).eq("user_id", user.id).eq("product_id", productId);
+      if (error) throw error;
+      await fetchCart();
+    } catch (error: any) {
+      console.error("Update quantity error:", error);
+      toast({ title: "Failed to update quantity", description: error.message || "Please try again", variant: "destructive" });
+    }
   };
 
   const clearCart = async () => {
     if (!user) return;
-    await supabase.from("cart_items").delete().eq("user_id", user.id);
-    setItems([]);
+    try {
+      const { error } = await supabase.from("cart_items").delete().eq("user_id", user.id);
+      if (error) throw error;
+      setItems([]);
+    } catch (error: any) {
+      console.error("Clear cart error:", error);
+    }
   };
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);

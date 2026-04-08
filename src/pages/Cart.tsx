@@ -7,21 +7,47 @@ import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 
 const Cart = () => {
   const { items, loading, total, updateQuantity, removeFromCart } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  // Show loading while auth is initializing
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-3"></div>
+            <p className="text-muted-foreground text-sm">Loading...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!user) {
     return (
       <Layout>
-        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 px-4">
           <ShoppingCart className="w-16 h-16 text-muted-foreground/30" />
-          <p className="text-muted-foreground">Please log in to view your cart.</p>
+          <h2 className="text-lg font-bold">Your Cart</h2>
+          <p className="text-muted-foreground text-center">Please log in to view your cart and saved items.</p>
           <Link to="/login"><Button variant="amber">Login →</Button></Link>
         </div>
       </Layout>
     );
   }
 
-  if (loading) return <Layout><div className="min-h-[60vh] flex items-center justify-center text-muted-foreground">Loading cart...</div></Layout>;
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent mb-3"></div>
+            <p className="text-muted-foreground text-sm">Loading your cart...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
