@@ -197,7 +197,7 @@ const AdminProductForm = () => {
     navigate("/admin");
   };
 
-  if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (authLoading || !serverVerified) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
   const inputClass = "w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
 
