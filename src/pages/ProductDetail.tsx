@@ -111,21 +111,27 @@ const ProductDetail = () => {
     };
   }, [product, primaryImage, displayPrice, formattedPrice, productUrl, reviewStats]);
 
-  const fetchProduct = async () => {
+  const fetchProduct = async (retries = 2) => {
     if (!slug) return;
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("products")
         .select("*, product_images(id, image_url, is_primary, sort_order), product_videos(id, video_url, thumbnail_url, sort_order), product_categories(name, slug)")
         .eq("slug", slug)
         .eq("status", "active")
         .maybeSingle();
       
+      if (error) throw error;
       setProduct(data);
       setVideos(data?.product_videos?.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)) || []);
       if (data) await fetchReviews(data.id);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching product:", error);
+      // Retry on auth lock errors
+      if (retries > 0 && error?.message?.includes("Lock")) {
+        await new Promise(r => setTimeout(r, 500));
+        return fetchProduct(retries - 1);
+      }
     } finally {
       setLoading(false);
     }
