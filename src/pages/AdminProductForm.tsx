@@ -30,8 +30,16 @@ const AdminProductForm = () => {
     specs: "",
   });
 
+  const [serverVerified, setServerVerified] = useState(false);
+
   useEffect(() => {
-    if (!authLoading && (!user || !isAdmin)) navigate("/login");
+    if (authLoading) return;
+    if (!user || !isAdmin) { navigate("/login"); return; }
+    // Server-side admin verification (defense-in-depth)
+    supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }).then(({ data }) => {
+      if (!data) { navigate("/"); return; }
+      setServerVerified(true);
+    });
   }, [user, isAdmin, authLoading, navigate]);
 
   useEffect(() => {
