@@ -11,11 +11,46 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Authenticate the caller
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user: authUser } } = await userClient.auth.getUser();
+
+    // Allow authenticated users or guest orders verified by ownership below
     const { transaction_id, order_id } = await req.json();
 
     if (!transaction_id || !order_id) {
       return new Response(JSON.stringify({ error: "Missing transaction_id or order_id" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Verify order ownership: authenticated user must own the order, or it's a guest order
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const { data: order } = await adminClient.from("orders").select("user_id, guest_email").eq("id", order_id).single();
+    if (!order) {
+      return new Response(JSON.stringify({ error: "Order not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // If order has a user_id, the caller must be that user
+    if (order.user_id && (!authUser || authUser.id !== order.user_id)) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -34,9 +69,7 @@ Deno.serve(async (req) => {
     });
     const verifyData = await verifyRes.json();
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const supabase = adminClient;
 
     if (verifyData.status === "success" && verifyData.data?.status === "successful") {
       // Validate that the transaction reference matches the order to prevent fraud

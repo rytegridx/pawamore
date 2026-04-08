@@ -30,8 +30,16 @@ const AdminProductForm = () => {
     specs: "",
   });
 
+  const [serverVerified, setServerVerified] = useState(false);
+
   useEffect(() => {
-    if (!authLoading && (!user || !isAdmin)) navigate("/login");
+    if (authLoading) return;
+    if (!user || !isAdmin) { navigate("/login"); return; }
+    // Server-side admin verification (defense-in-depth)
+    supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }).then(({ data }) => {
+      if (!data) { navigate("/"); return; }
+      setServerVerified(true);
+    });
   }, [user, isAdmin, authLoading, navigate]);
 
   useEffect(() => {
@@ -189,7 +197,7 @@ const AdminProductForm = () => {
     navigate("/admin");
   };
 
-  if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (authLoading || !serverVerified) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
   const inputClass = "w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
 
