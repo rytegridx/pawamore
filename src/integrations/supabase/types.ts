@@ -529,7 +529,9 @@ export type Database = {
       }
       products: {
         Row: {
+          brand: string | null
           brand_id: string | null
+          category: string | null
           category_id: string | null
           created_at: string
           description: string | null
@@ -538,6 +540,8 @@ export type Database = {
           ideal_for: string | null
           is_featured: boolean | null
           is_popular: boolean | null
+          meta_description: string | null
+          meta_keywords: string | null
           name: string
           powers: string | null
           price: number
@@ -550,7 +554,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          brand?: string | null
           brand_id?: string | null
+          category?: string | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -559,6 +565,8 @@ export type Database = {
           ideal_for?: string | null
           is_featured?: boolean | null
           is_popular?: boolean | null
+          meta_description?: string | null
+          meta_keywords?: string | null
           name: string
           powers?: string | null
           price: number
@@ -571,7 +579,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          brand?: string | null
           brand_id?: string | null
+          category?: string | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -580,6 +590,8 @@ export type Database = {
           ideal_for?: string | null
           is_featured?: boolean | null
           is_popular?: boolean | null
+          meta_description?: string | null
+          meta_keywords?: string | null
           name?: string
           powers?: string | null
           price?: number
@@ -738,6 +750,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      product_import_logs: {
+        Row: {
+          id: string
+          source_url: string
+          imported_by: string | null
+          product_id: string | null
+          status: "pending" | "success" | "failed"
+          original_data: Json | null
+          processed_data: Json | null
+          ai_response: Json | null
+          error_message: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          source_url: string
+          imported_by?: string | null
+          product_id?: string | null
+          status?: "pending" | "success" | "failed"
+          original_data?: Json | null
+          processed_data?: Json | null
+          ai_response?: Json | null
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          source_url?: string
+          imported_by?: string | null
+          product_id?: string | null
+          status?: "pending" | "success" | "failed"
+          original_data?: Json | null
+          processed_data?: Json | null
+          ai_response?: Json | null
+          error_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_import_logs_imported_by_fkey"
+            columns: ["imported_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_import_logs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wishlist: {
         Row: {
