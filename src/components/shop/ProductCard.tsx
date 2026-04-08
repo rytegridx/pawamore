@@ -33,8 +33,12 @@ const ProductCard = ({ product, onAddToCart, isComparing, onToggleCompare, compa
   const primaryImage = product.product_images?.find((i) => i.is_primary)?.image_url || product.product_images?.[0]?.image_url;
   const outOfStock = product.stock_quantity !== null && product.stock_quantity !== undefined && product.stock_quantity <= 0;
   const effectivePrice = product.discount_price ?? product.price;
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const shareUrl = `${supabaseUrl}/functions/v1/og-image-proxy?slug=${encodeURIComponent(product.slug)}`;
+  // OG proxy URL for social sharing - uses Cloudflare Worker
+  // Set VITE_OG_PROXY_URL in env after deploying the worker (e.g., https://pawamore-og.workers.dev)
+  const ogProxyUrl = import.meta.env.VITE_OG_PROXY_URL;
+  const shareUrl = ogProxyUrl 
+    ? `${ogProxyUrl}/products/${encodeURIComponent(product.slug)}`
+    : `https://pawamore.lovable.app/products/${encodeURIComponent(product.slug)}`;
   const cleanProductUrl = `https://pawamore.lovable.app/products/${encodeURIComponent(product.slug)}`;
 
   return (
