@@ -52,8 +52,8 @@ const ProductDetail = () => {
   const formattedPrice = displayPrice ? `₦${Number(displayPrice).toLocaleString('en-NG')}` : '';
   
   // Create rich description for social sharing
-  const socialDescription = product 
-    ? `${product.short_description || product.name} | ${formattedPrice} | Available at PawaMore Systems. ${product.stock_quantity > 0 ? '✅ In Stock' : '⏳ Pre-order'}. Free delivery in Lagos.`
+  const socialDescription = product
+    ? `${product.short_description || product.name} | ${formattedPrice} | Available at PawaMore Systems. ${product.stock_quantity > 0 ? "✅ In Stock" : "⏳ Pre-order"}. Delivery options available nationwide.`
     : "Quality solar and battery solutions at PawaMore Systems Nigeria";
   
   // Product availability for schema
