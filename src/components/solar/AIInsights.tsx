@@ -121,15 +121,15 @@ const AIInsights = ({ appliances, results }: AIInsightsProps) => {
   const typeStyles: Record<Insight["type"], string> = {
     tip: "border-l-primary bg-primary/5",
     warning: "border-l-accent bg-accent/5",
-    recommendation: "border-l-secondary bg-secondary/60",
-    cta: "border-l-accent bg-secondary/40",
+    recommendation: "border-l-secondary bg-secondary/5",
+    cta: "border-l-secondary bg-solar-peach",
   };
 
   const iconColor: Record<Insight["type"], string> = {
     tip: "text-primary",
     warning: "text-accent",
-    recommendation: "text-primary",
-    cta: "text-accent",
+    recommendation: "text-secondary",
+    cta: "text-secondary",
   };
 
   return (

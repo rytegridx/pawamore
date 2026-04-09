@@ -20,7 +20,7 @@ const ApplianceCard = ({ appliance, onUpdate, onRemove }: ApplianceCardProps) =>
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2 xs:grid-cols-3">
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">Watts</label>
           <Input

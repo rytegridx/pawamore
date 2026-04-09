@@ -35,7 +35,7 @@ const PresetSelector = ({ onSelect }: PresetSelectorProps) => {
           <button
             key={preset.name}
             onClick={() => onSelect(preset)}
-            className="flex items-center gap-2 rounded-lg border border-border bg-card p-2.5 text-left transition-all hover:border-primary/30 hover:bg-secondary/40"
+            className="flex items-center gap-2 rounded-lg border border-border bg-card p-2.5 text-left transition-all hover:border-secondary hover:bg-solar-peach"
           >
             <span className="text-lg" aria-hidden="true">
               {preset.icon}

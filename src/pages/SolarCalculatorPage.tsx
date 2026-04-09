@@ -129,7 +129,7 @@ const SolarCalculatorPage = () => {
 
             <div className="space-y-5">
               {appliances.length === 0 ? (
-                <div className="rounded-xl border-2 border-dashed border-border p-10 text-center">
+                <div className="rounded-xl border-2 border-dashed border-border bg-solar-cream/40 p-10 text-center">
                   <Sun className="mx-auto mb-3 h-12 w-12 text-muted-foreground/30" />
                   <p className="text-sm text-muted-foreground">
                     Add appliances to see your solar power recommendations.
@@ -140,7 +140,7 @@ const SolarCalculatorPage = () => {
                   <ResultsPanel results={results} />
                   <AIInsights appliances={appliances} results={results} />
                   <Button
-                    className="w-full rounded-xl bg-primary py-6 text-base font-bold uppercase tracking-wider hover:bg-primary/90"
+                    className="w-full rounded-xl bg-secondary py-6 text-base font-bold uppercase tracking-wider text-secondary-foreground hover:bg-secondary/90"
                     onClick={() => window.open("/contact", "_self")}
                   >
                     Get Free Consultation

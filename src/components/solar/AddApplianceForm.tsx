@@ -38,7 +38,7 @@ const AddApplianceForm = ({ onAdd }: AddApplianceFormProps) => {
             className="h-9 bg-background text-sm"
           />
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 gap-2 xs:grid-cols-3">
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">Watts</label>
             <Input
@@ -74,7 +74,10 @@ const AddApplianceForm = ({ onAdd }: AddApplianceFormProps) => {
             />
           </div>
         </div>
-        <Button type="submit" className="w-full text-xs font-semibold uppercase tracking-wide">
+        <Button
+          type="submit"
+          className="w-full bg-primary text-xs font-semibold uppercase tracking-wide text-primary-foreground hover:bg-primary/90"
+        >
           <Plus className="mr-1 h-4 w-4" />
           Add Appliance
         </Button>
