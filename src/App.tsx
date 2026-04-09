@@ -43,6 +43,49 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminProductForm = lazy(() => import("./pages/AdminProductForm"));
 
 const queryClient = new QueryClient();
+const CHUNK_RELOAD_KEY = "pawamore_chunk_reload_once";
+
+const isChunkLoadError = (message: string) =>
+  /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk [\d]+ failed/i.test(
+    message
+  );
+
+const ChunkLoadRecovery = () => {
+  useEffect(() => {
+    const reloadOnce = () => {
+      if (sessionStorage.getItem(CHUNK_RELOAD_KEY) === "1") return;
+      sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
+      window.location.reload();
+    };
+
+    const onError = (event: ErrorEvent) => {
+      const message = event.message || event.error?.message || "";
+      if (isChunkLoadError(message)) reloadOnce();
+    };
+
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      const message =
+        typeof reason === "string" ? reason : reason?.message ? String(reason.message) : "";
+      if (isChunkLoadError(message)) {
+        event.preventDefault();
+        reloadOnce();
+      }
+    };
+
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    };
+  }, []);
+
+  return null;
+};
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -68,6 +111,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
+            <ChunkLoadRecovery />
             <ScrollToTop />
             <ScrollToTopButton />
             <Suspense fallback={<PageLoader />}>
