@@ -66,7 +66,7 @@ export function calculateSolarNeeds(appliances: Appliance[]) {
   const batteryCost = Math.round(batteryCapacity * BATTERY_PRICE_PER_KWH);
   const inverterCost = Math.round((inverterSize / 1000) * INVERTER_PRICE_PER_KW);
   const panelCost = Math.round(panelsNeeded * PANEL_PRICE);
-  const installationCost = INSTALLATION_COST;
+  const installationCost = INSTALLATION_COST + (panelsNeeded > 4 ? (panelsNeeded - 4) * 20000 : 0);
   const totalCost = batteryCost + inverterCost + panelCost + installationCost;
 
   const annualCO2Saved = dailyConsumption * 365 * 0.5;
