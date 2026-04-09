@@ -58,6 +58,14 @@ export default {
         amber: "hsl(var(--amber))",
         "light-green": "hsl(var(--light-green))",
         stone: "hsl(var(--stone))",
+        solar: {
+          orange: "hsl(var(--solar-orange))",
+          green: "hsl(var(--solar-green))",
+          "green-light": "hsl(var(--solar-green-light))",
+          gold: "hsl(var(--solar-gold))",
+          cream: "hsl(var(--solar-cream))",
+          peach: "hsl(var(--solar-peach))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

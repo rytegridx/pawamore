@@ -52,6 +52,13 @@
     --shadow-elevated: 0 12px 40px -8px hsl(152 53% 9% / 0.15);
     --shadow-amber: 0 8px 24px -4px hsl(37 91% 55% / 0.3);
 
+    --solar-orange: 24 95% 53%;
+    --solar-green: 160 40% 16%;
+    --solar-green-light: 155 30% 25%;
+    --solar-gold: 40 90% 52%;
+    --solar-cream: 40 30% 96%;
+    --solar-peach: 30 80% 95%;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 152 65% 29%;
