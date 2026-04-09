@@ -101,22 +101,47 @@ const SolarCalculatorPage = () => {
       quantity: appliance.quantity,
     }));
 
+    const topProducts = recommendedProducts.slice(0, 3).map((product) => ({
+      name: product.name,
+      slug: product.slug,
+      link: `/products/${product.slug}`,
+      reason: product.recommendationReason,
+    }));
+
+    const contextPayload = {
+      type: "solar_calculator",
+      results,
+      appliances: applianceSummary,
+      recommended_products: topProducts,
+    };
+
+    const aiPrompt = [
+      "Please review my solar calculator results and refine the recommendation.",
+      "",
+      "Here are my calculator results:",
+      `- Peak load: ${results.peakLoad}W`,
+      `- Daily consumption: ${results.dailyConsumption} kWh/day`,
+      `- Suggested battery: ${results.batteryCapacity} kWh`,
+      `- Suggested inverter: ${results.inverterSize}W`,
+      `- Suggested solar panels: ${results.panelsNeeded} x ${410}W`,
+      `- Estimated total cost: ₦${results.totalCost.toLocaleString()}`,
+      "",
+      "Appliances:",
+      ...applianceSummary.map(
+        (a) => `- ${a.name}: ${a.quantity} unit(s), ${a.watts}W, ${a.hoursPerDay}h/day`
+      ),
+      "",
+      topProducts.length > 0 ? "Top product matches from your shop:" : "Top product matches from your shop: none yet",
+      ...topProducts.map((p) => `- ${p.name} (${p.link}) — ${p.reason}`),
+      "",
+      "Now summarize the best setup for me, explain any trade-offs, and ask exactly one question to refine further.",
+    ].join("\n");
+
     window.dispatchEvent(
       new CustomEvent("pawamore-chat:start", {
         detail: {
-          message:
-            "Please review my solar calculator results, summarize the best setup for me, and ask me one question to refine your recommendation.",
-          context: {
-            type: "solar_calculator",
-            results,
-            appliances: applianceSummary,
-            recommended_products: recommendedProducts.map((product) => ({
-              name: product.name,
-              slug: product.slug,
-              link: `/products/${product.slug}`,
-              reason: product.recommendationReason,
-            })),
-          },
+          message: aiPrompt,
+          context: contextPayload,
         },
       })
     );

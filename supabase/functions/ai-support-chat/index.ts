@@ -123,6 +123,65 @@ When greeting, use variations like:
 
 Remember: Every response should leave the customer feeling educated, empowered, and excited about the investment opportunity — without ever using our internal strategy terminology.`;
 
+const buildSolarContextDigest = (context: Record<string, unknown>): string | null => {
+  const type = typeof context.type === "string" ? context.type : "";
+  if (type !== "solar_calculator") return null;
+
+  const results = context.results as Record<string, unknown> | undefined;
+  const appliances = Array.isArray(context.appliances)
+    ? (context.appliances as Record<string, unknown>[])
+    : [];
+  const recommendedProducts = Array.isArray(context.recommended_products)
+    ? (context.recommended_products as Record<string, unknown>[])
+    : [];
+
+  const resultLine = results
+    ? [
+        `peakLoad=${results.peakLoad ?? "n/a"}W`,
+        `dailyConsumption=${results.dailyConsumption ?? "n/a"}kWh/day`,
+        `batteryCapacity=${results.batteryCapacity ?? "n/a"}kWh`,
+        `inverterSize=${results.inverterSize ?? "n/a"}W`,
+        `panelsNeeded=${results.panelsNeeded ?? "n/a"}`,
+        `totalCost=${results.totalCost ?? "n/a"}NGN`,
+      ].join(", ")
+    : "no result summary present";
+
+  const applianceLines =
+    appliances.length > 0
+      ? appliances
+          .map((item) => {
+            const name = String(item.name ?? "Unknown appliance");
+            const qty = item.quantity ?? "n/a";
+            const watts = item.watts ?? "n/a";
+            const hours = item.hoursPerDay ?? "n/a";
+            return `- ${name}: qty=${qty}, watts=${watts}, hoursPerDay=${hours}`;
+          })
+          .join("\n")
+      : "- none";
+
+  const productLines =
+    recommendedProducts.length > 0
+      ? recommendedProducts
+          .map((item) => {
+            const name = String(item.name ?? "Unknown product");
+            const link = String(item.link ?? "");
+            const reason = String(item.reason ?? "");
+            return `- ${name} ${link ? `(${link})` : ""}${reason ? ` — ${reason}` : ""}`;
+          })
+          .join("\n")
+      : "- none";
+
+  return [
+    "SOLAR_CALCULATOR_CONTEXT (authoritative):",
+    `Results: ${resultLine}`,
+    "Appliances:",
+    applianceLines,
+    "Recommended products:",
+    productLines,
+    "Do not ask the user to resend these values. Use this data directly.",
+  ].join("\n");
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -226,6 +285,8 @@ Deno.serve(async (req) => {
       .order("created_at", { ascending: true })
       .limit(20);
 
+    const solarContextDigest = chatContext ? buildSolarContextDigest(chatContext) : null;
+
     const contextPrompt = chatContext
       ? `The user has shared extra context for this request. Use it to answer more precisely.
 
@@ -235,12 +296,14 @@ ${JSON.stringify(chatContext)}
 If this context is from a solar estimate, do all of the following:
 1) summarize the estimate in plain language,
 2) explain 2-3 concrete improvements or trade-offs,
-3) finish with exactly one focused follow-up question.`
+3) finish with exactly one focused follow-up question.
+4) NEVER ask the user to paste or resend calculator values if context already includes them.`
       : null;
 
     const messageHistory = [
       { role: "system", content: SYSTEM_PROMPT },
       ...(contextPrompt ? [{ role: "system", content: contextPrompt }] : []),
+      ...(solarContextDigest ? [{ role: "system", content: solarContextDigest }] : []),
       ...(messages || []).map((m: { role: string; content: string }) => ({
         role: m.role,
         content: m.content,
