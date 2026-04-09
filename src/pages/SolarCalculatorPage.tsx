@@ -6,8 +6,14 @@ import AIInsights from "@/components/solar/AIInsights";
 import AddApplianceForm from "@/components/solar/AddApplianceForm";
 import ApplianceCard from "@/components/solar/ApplianceCard";
 import PresetSelector from "@/components/solar/PresetSelector";
+import ProductRecommendations from "@/components/solar/ProductRecommendations";
 import ResultsPanel from "@/components/solar/ResultsPanel";
 import { Appliance, PresetAppliance, calculateSolarNeeds } from "@/lib/solar-data";
+import {
+  recommendSolarProducts,
+  ShopProductForRecommendation,
+} from "@/lib/solar-product-recommendations";
+import { supabase } from "@/integrations/supabase/client";
 import useSEO from "@/hooks/useSEO";
 
 let idCounter = 0;
@@ -16,6 +22,7 @@ const nextId = () => String(++idCounter);
 const SolarCalculatorPage = () => {
   const [appliances, setAppliances] = useState<Appliance[]>([]);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [shopProducts, setShopProducts] = useState<ShopProductForRecommendation[]>([]);
 
   useSEO({
     title: "Solar Calculator - Calculate Your Power Needs | PawaMore",
@@ -30,7 +37,28 @@ const SolarCalculatorPage = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select(
+          "id,name,slug,short_description,description,ideal_for,powers,price,discount_price,is_featured,is_popular,stock_quantity,specs,product_images(image_url,is_primary),product_categories(name,slug),brands(name,slug)"
+        )
+        .eq("status", "active");
+
+      if (!error && data) {
+        setShopProducts(data as ShopProductForRecommendation[]);
+      }
+    };
+
+    void fetchProducts();
+  }, []);
+
   const results = useMemo(() => calculateSolarNeeds(appliances), [appliances]);
+  const recommendedProducts = useMemo(
+    () => (appliances.length > 0 ? recommendSolarProducts(shopProducts, appliances, results, 3) : []),
+    [shopProducts, appliances, results]
+  );
 
   const addPreset = (preset: PresetAppliance) => {
     setAppliances((prev) => [
@@ -81,6 +109,12 @@ const SolarCalculatorPage = () => {
             type: "solar_calculator",
             results,
             appliances: applianceSummary,
+            recommended_products: recommendedProducts.map((product) => ({
+              name: product.name,
+              slug: product.slug,
+              link: `/products/${product.slug}`,
+              reason: product.recommendationReason,
+            })),
           },
         },
       })
@@ -161,6 +195,7 @@ const SolarCalculatorPage = () => {
               ) : (
                 <>
                   <ResultsPanel results={results} />
+                  <ProductRecommendations recommendations={recommendedProducts} />
                   <AIInsights appliances={appliances} results={results} />
                   <Button
                     variant="outline"
