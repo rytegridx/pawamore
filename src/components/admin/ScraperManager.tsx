@@ -7,10 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, ExternalLink, RefreshCw, Bot } from "lucide-react";
 import {
+  clampBatchSize,
   isValidUrl,
   scraperStatusMeta,
   isRunActive,
   type ScraperRun,
+  type ScrapeMode,
   type ScraperStatus,
 } from "@/lib/scraperTypes";
 
@@ -21,6 +23,8 @@ export default function ScraperManager() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [runs, setRuns] = useState<ScraperRun[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<ScrapeMode>("single");
+  const [batchSize, setBatchSize] = useState(5);
 
   const fetchRuns = useCallback(async () => {
     const { data, error } = await (supabase as any)
@@ -64,17 +68,19 @@ export default function ScraperManager() {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
 
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-product`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ url }),
-        }
-      );
+      const payload =
+        mode === "site"
+          ? { url, mode, batch_size: clampBatchSize(batchSize) }
+          : { url, mode: "single" as const };
+
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-product`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
       const json = await res.json();
 
@@ -87,7 +93,10 @@ export default function ScraperManager() {
       } else {
         toast({
           title: "Scrape started",
-          description: `Run ID: ${json.run_id}`,
+          description:
+            mode === "site"
+              ? `Run ID: ${json.run_id} • Importing up to ${clampBatchSize(batchSize)} products`
+              : `Run ID: ${json.run_id}`,
         });
         setUrl("");
       }
@@ -116,10 +125,40 @@ export default function ScraperManager() {
       </div>
 
       {/* URL input */}
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <Button
+            type="button"
+            variant={mode === "single" ? "default" : "outline"}
+            onClick={() => setMode("single")}
+          >
+            Single Product URL
+          </Button>
+          <Button
+            type="button"
+            variant={mode === "site" ? "default" : "outline"}
+            onClick={() => setMode("site")}
+          >
+            Site Bulk Import
+          </Button>
+          <Input
+            type="number"
+            min={1}
+            max={20}
+            value={batchSize}
+            onChange={(e) => setBatchSize(clampBatchSize(Number(e.target.value)))}
+            disabled={mode !== "site" || isSubmitting}
+            placeholder="Batch size (1-20)"
+          />
+        </div>
+        <div className="flex gap-2">
         <Input
           type="url"
-          placeholder="https://itelsolar.com/product/some-product/"
+          placeholder={
+            mode === "site"
+              ? "https://itelsolar.com/ (or category/listing page)"
+              : "https://itelsolar.com/product/some-product/"
+          }
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !isSubmitting && handleScrape()}
@@ -136,6 +175,7 @@ export default function ScraperManager() {
         <Button variant="outline" size="icon" onClick={fetchRuns} title="Refresh">
           <RefreshCw className="w-4 h-4" />
         </Button>
+      </div>
       </div>
 
       {/* Runs table */}
@@ -186,6 +226,12 @@ export default function ScraperManager() {
                         {run.error_message && (
                           <span className="text-xs text-red-600 max-w-xs break-words">
                             {run.error_message}
+                          </span>
+                        )}
+                        {run.extracted_data && typeof run.extracted_data === "object" && (
+                          <span className="text-xs text-muted-foreground">
+                            {(run.extracted_data as any).success_count ?? 0} success •{" "}
+                            {(run.extracted_data as any).failure_count ?? 0} failed
                           </span>
                         )}
                       </div>

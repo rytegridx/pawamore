@@ -27,7 +27,7 @@ const AdminProductForm = () => {
     name: "", slug: "", category_id: "", brand_id: "", description: "", short_description: "",
     price: "", discount_price: "", powers: "", ideal_for: "", promo_label: "",
     stock_quantity: "0", status: "active", is_featured: false, is_popular: false,
-    specs: "",
+    specs: "", source_url: "", product_type: "", source_metadata: "",
   });
 
   const [serverVerified, setServerVerified] = useState(false);
@@ -70,6 +70,11 @@ const AdminProductForm = () => {
         stock_quantity: String(data.stock_quantity), status: data.status || "active",
         is_featured: data.is_featured || false, is_popular: data.is_popular || false,
         specs: data.specs ? JSON.stringify(data.specs, null, 2) : "",
+        source_url: (data as any).source_url || "",
+        product_type: (data as any).product_type || "",
+        source_metadata: (data as any).source_metadata
+          ? JSON.stringify((data as any).source_metadata, null, 2)
+          : "",
       });
       setImages(((data as any).product_images || []).map((img: any) => ({ id: img.id, url: img.image_url, is_primary: img.is_primary })));
       setVideos(((data as any).product_videos || []).map((vid: any) => ({ id: vid.id, video_url: vid.video_url, thumbnail_url: vid.thumbnail_url, sort_order: vid.sort_order })));
@@ -146,6 +151,10 @@ const AdminProductForm = () => {
     if (form.specs.trim()) {
       try { specs = JSON.parse(form.specs); } catch { /* ignore */ }
     }
+    let sourceMetadata = {};
+    if (form.source_metadata.trim()) {
+      try { sourceMetadata = JSON.parse(form.source_metadata); } catch { /* ignore */ }
+    }
 
     const productData = {
       name: form.name, slug: form.slug, category_id: form.category_id || null,
@@ -155,6 +164,9 @@ const AdminProductForm = () => {
       powers: form.powers || null, ideal_for: form.ideal_for || null, promo_label: form.promo_label || null,
       stock_quantity: parseInt(form.stock_quantity), status: form.status,
       is_featured: form.is_featured, is_popular: form.is_popular, specs,
+      source_url: form.source_url || null,
+      product_type: form.product_type || null,
+      source_metadata: Object.keys(sourceMetadata).length > 0 ? sourceMetadata : null,
     };
 
     let productId = id;
@@ -231,6 +243,16 @@ const AdminProductForm = () => {
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">URL Slug</label>
                 <input className={inputClass} value={form.slug} onChange={(e) => handleChange("slug", e.target.value)} placeholder="auto-generated" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Source URL</label>
+                <input className={inputClass} value={form.source_url} onChange={(e) => handleChange("source_url", e.target.value)} placeholder="https://itelsolar.com/product/..." />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Product Type</label>
+                <input className={inputClass} value={form.product_type} onChange={(e) => handleChange("product_type", e.target.value)} placeholder="e.g. All-in-one Solar Generator" />
               </div>
             </div>
             <div>
@@ -376,6 +398,12 @@ const AdminProductForm = () => {
             <h2 className="font-display font-bold text-lg">Technical Specs (JSON)</h2>
             <textarea className={`${inputClass} resize-none font-mono text-xs`} rows={5} value={form.specs} onChange={(e) => handleChange("specs", e.target.value)}
               placeholder='{"battery": "3.5kWh LiFePO4", "inverter": "3.5kVA Hybrid"}' />
+          </div>
+
+          <div className="bg-card rounded-xl border border-border p-4 sm:p-6 space-y-4">
+            <h2 className="font-display font-bold text-lg">Source Metadata (JSON)</h2>
+            <textarea className={`${inputClass} resize-none font-mono text-xs`} rows={5} value={form.source_metadata} onChange={(e) => handleChange("source_metadata", e.target.value)}
+              placeholder='{"sku":"IESS-15K05","warranty":"2 years","source_currency":"NGN"}' />
           </div>
 
           {/* Submit */}

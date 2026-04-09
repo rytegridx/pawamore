@@ -6,30 +6,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Compact the HTML to keep the AI prompt within token limits.
-// This output is sent only to the AI API and is NEVER rendered in a browser.
-// We apply each replacement repeatedly until no more matches remain to avoid
-// re-introduced partial tags from nested/malformed markup.
-function compactHtml(raw: string): string {
-  const removeAll = (src: string, pattern: RegExp): string => {
-    let prev = src;
-    let cur = src.replace(pattern, "");
-    while (cur !== prev) { prev = cur; cur = cur.replace(pattern, ""); }
-    return cur;
-  };
+type ScraperStatus = "pending" | "running" | "success" | "error";
+type ScrapeMode = "single" | "site";
 
-  let text = removeAll(raw, /<script\b[^>]*>[\s\S]*?<\/script[^>]*>/gi);
-  text = removeAll(text, /<style\b[^>]*>[\s\S]*?<\/style[^>]*>/gi);
-  text = removeAll(text, /<!--[\s\S]*?-->/g);
-  text = text.replace(/\s{2,}/g, " ");
-  return text.slice(0, 40000);
+interface ScrapeRequest {
+  url?: string;
+  mode?: ScrapeMode;
+  batch_size?: number;
 }
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+interface ExtractedImage {
+  url: string;
+  alt_text?: string;
 }
 
 interface ExtractedProduct {
@@ -47,42 +35,507 @@ interface ExtractedProduct {
   promo_label: string | null;
   stock_quantity: number;
   status: "active" | "draft" | "out_of_stock";
-  images: { url: string; alt_text: string }[];
+  images: ExtractedImage[];
   brand_name?: string;
   category_name?: string;
+  product_type?: string;
+  source_currency?: string | null;
+  original_price_text?: string | null;
+  extra_fields?: Record<string, unknown>;
 }
 
-const EXTRACTION_PROMPT = `You are a product data extraction assistant for an e-commerce store that sells solar and energy products in Nigeria.
+const EXTRACTION_PROMPT = `You are extracting e-commerce product data from a manufacturer product page for a Nigerian solar store.
 
-Extract the following fields from the HTML of a product page and return ONLY valid JSON — no markdown, no code fences.
-
-Required JSON shape:
+Return ONLY valid JSON (no markdown / no commentary) in this exact shape:
 {
-  "name": "Full product name",
-  "slug": "url-safe-slug-derived-from-name",
-  "short_description": "One or two sentence summary (max 200 chars)",
-  "description": "Full HTML description preserving headings, lists and paragraphs",
+  "name": "string",
+  "slug": "kebab-case-slug",
+  "short_description": "max 200 chars",
+  "description": "<html content>",
   "price": 0,
   "discount_price": null,
-  "specs": { "key": "value", … },
-  "powers": "Comma-separated list of appliances the product can power",
-  "ideal_for": "Comma-separated use cases",
+  "specs": { "Key": "Value" },
+  "powers": "comma-separated text",
+  "ideal_for": "comma-separated text",
   "is_featured": false,
   "is_popular": false,
   "promo_label": null,
   "stock_quantity": 0,
   "status": "active",
-  "images": [{ "url": "https://…", "alt_text": "…" }],
-  "brand_name": "Brand if identifiable",
-  "category_name": "Category if identifiable"
+  "images": [{ "url": "https://...", "alt_text": "..." }],
+  "brand_name": "string or null",
+  "category_name": "string or null",
+  "product_type": "string or null",
+  "source_currency": "NGN/USD/... or null",
+  "original_price_text": "raw text seen on page or null",
+  "extra_fields": { "sku": "...", "warranty": "...", "model": "...", "...": "..." }
 }
 
 Rules:
-- price must be a plain number in Nigerian Naira (NGN). If the currency is not NGN, convert to NGN at the current approximate rate and still store as a number.
-- status: use "out_of_stock" if the page says "out of stock" or quantity is 0; otherwise "active".
-- If a field cannot be determined from the page, use the default shown above.
-- slug must be URL-safe lowercase with hyphens, max 120 chars.
-- Return ONLY the JSON object — absolutely no other text.`;
+- Extract all meaningful product fields found on the page. If a field has no dedicated key above, put it in extra_fields.
+- price must be numeric NGN. If source is another currency, convert approximately to NGN and keep original text in original_price_text.
+- slug must be lowercase kebab-case, <= 120 chars.
+- images must be direct image URLs from the product gallery where possible.
+- If stock is unknown, use stock_quantity 10 and status active.
+- Do not invent unavailable values.`;
+
+function compactHtml(raw: string): string {
+  const removeAll = (src: string, pattern: RegExp): string => {
+    let prev = src;
+    let cur = src.replace(pattern, "");
+    while (cur !== prev) {
+      prev = cur;
+      cur = cur.replace(pattern, "");
+    }
+    return cur;
+  };
+
+  let text = removeAll(raw, /<script\b[^>]*>[\s\S]*?<\/script[^>]*>/gi);
+  text = removeAll(text, /<style\b[^>]*>[\s\S]*?<\/style[^>]*>/gi);
+  text = removeAll(text, /<!--[\s\S]*?-->/g);
+  text = text.replace(/\s{2,}/g, " ");
+  return text.slice(0, 45000);
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 120);
+}
+
+function clampBatchSize(batchSize?: number): number {
+  if (batchSize === undefined || batchSize === null || Number.isNaN(batchSize)) return 5;
+  return Math.max(1, Math.min(20, Math.floor(batchSize)));
+}
+
+function inferMode(url: URL, explicitMode?: ScrapeMode): ScrapeMode {
+  if (explicitMode === "single" || explicitMode === "site") return explicitMode;
+  return url.pathname.includes("/product/") ? "single" : "site";
+}
+
+function isLikelyProductUrl(value: string): boolean {
+  return /\/product\//i.test(value);
+}
+
+function sanitizeUrl(raw: string): string {
+  const parsed = new URL(raw.trim());
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    throw new Error("Only http:// and https:// URLs are allowed");
+  }
+  if (parsed.protocol === "http:" && !["localhost", "127.0.0.1"].includes(parsed.hostname)) {
+    throw new Error("HTTP is only allowed for localhost");
+  }
+  parsed.hash = "";
+  return parsed.toString();
+}
+
+async function fetchText(url: string, timeoutMs = 15000): Promise<string> {
+  const res = await fetch(url, {
+    headers: { "User-Agent": "PawaMore-Scraper/2.0 (+https://pawamore.com)" },
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
+  }
+  return await res.text();
+}
+
+function extractSitemapLocs(xml: string): string[] {
+  const urls: string[] = [];
+  const regex = /<loc>([^<]+)<\/loc>/gi;
+  let match: RegExpExecArray | null = regex.exec(xml);
+  while (match) {
+    urls.push(match[1].trim());
+    match = regex.exec(xml);
+  }
+  return urls;
+}
+
+function extractProductLinksFromHtml(html: string, baseUrl: string): string[] {
+  const found = new Set<string>();
+  const hrefRegex = /href=["']([^"'#]+)["']/gi;
+  let match: RegExpExecArray | null = hrefRegex.exec(html);
+
+  while (match) {
+    const href = match[1].trim();
+    try {
+      const absolute = new URL(href, baseUrl).toString();
+      if (isLikelyProductUrl(absolute)) {
+        found.add(absolute);
+      }
+    } catch {
+      // ignore malformed URLs
+    }
+    match = hrefRegex.exec(html);
+  }
+
+  return Array.from(found);
+}
+
+async function discoverProductUrls(rootUrl: string, limit: number): Promise<string[]> {
+  if (isLikelyProductUrl(rootUrl)) return [rootUrl];
+
+  const root = new URL(rootUrl);
+  const origin = root.origin;
+  const discovered = new Set<string>();
+
+  const addIfProduct = (value: string) => {
+    try {
+      const parsed = new URL(value);
+      if (parsed.origin === origin && isLikelyProductUrl(parsed.toString())) {
+        discovered.add(parsed.toString());
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const trySitemap = async (url: string) => {
+    try {
+      const xml = await fetchText(url, 12000);
+      const locs = extractSitemapLocs(xml);
+      for (const loc of locs) addIfProduct(loc);
+      return locs;
+    } catch {
+      return [];
+    }
+  };
+
+  const productSitemapUrl = `${origin}/product-sitemap.xml`;
+  await trySitemap(productSitemapUrl);
+
+  if (discovered.size < limit) {
+    const sitemapIndexLocs = await trySitemap(`${origin}/sitemap_index.xml`);
+    const candidateSitemaps = sitemapIndexLocs.filter((loc) =>
+      /product|shop|catalog/i.test(loc)
+    );
+
+    for (const loc of candidateSitemaps) {
+      if (discovered.size >= limit * 2) break;
+      await trySitemap(loc);
+    }
+  }
+
+  if (discovered.size < limit) {
+    const html = await fetchText(rootUrl, 12000);
+    extractProductLinksFromHtml(html, rootUrl).forEach((u) => addIfProduct(u));
+  }
+
+  return Array.from(discovered).slice(0, limit);
+}
+
+function parseJsonFromModel(rawText: string): ExtractedProduct {
+  const jsonText = rawText
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/, "")
+    .trim();
+  return JSON.parse(jsonText) as ExtractedProduct;
+}
+
+function getExtensionFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const last = parsed.pathname.split("/").pop() ?? "";
+    const ext = last.split(".").pop()?.toLowerCase();
+    if (ext && /^[a-z0-9]{2,5}$/.test(ext)) return ext;
+  } catch {
+    // ignore
+  }
+  return "jpg";
+}
+
+function extensionFromContentType(contentType: string | null): string | null {
+  if (!contentType) return null;
+  const lowered = contentType.toLowerCase();
+  if (lowered.includes("image/jpeg")) return "jpg";
+  if (lowered.includes("image/png")) return "png";
+  if (lowered.includes("image/webp")) return "webp";
+  if (lowered.includes("image/gif")) return "gif";
+  if (lowered.includes("image/svg+xml")) return "svg";
+  return null;
+}
+
+async function uploadImageToStorage(
+  supabase: ReturnType<typeof createClient>,
+  sourceUrl: string,
+  productSlug: string
+): Promise<string> {
+  try {
+    const imageRes = await fetch(sourceUrl, {
+      headers: { "User-Agent": "PawaMore-Scraper/2.0 (+https://pawamore.com)" },
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!imageRes.ok) return sourceUrl;
+
+    const contentType = imageRes.headers.get("content-type");
+    if (contentType && !contentType.toLowerCase().startsWith("image/")) return sourceUrl;
+
+    const ext = extensionFromContentType(contentType) ?? getExtensionFromUrl(sourceUrl);
+    const path = `imports/${new Date().toISOString().slice(0, 10)}/${slugify(
+      productSlug
+    )}/${crypto.randomUUID()}.${ext}`;
+
+    const bytes = await imageRes.arrayBuffer();
+    const { error: uploadError } = await supabase.storage
+      .from("product-images")
+      .upload(path, bytes, {
+        contentType: contentType ?? "image/jpeg",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.warn("Image upload failed; using source URL:", uploadError.message);
+      return sourceUrl;
+    }
+
+    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+    return data.publicUrl;
+  } catch {
+    return sourceUrl;
+  }
+}
+
+async function resolveOrCreateBrandId(
+  supabase: ReturnType<typeof createClient>,
+  brandName?: string
+): Promise<string | null> {
+  if (!brandName) return null;
+  const slug = slugify(brandName);
+
+  const { data: existing } = await supabase
+    .from("brands")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (existing?.id) return existing.id;
+
+  const { data: inserted } = await supabase
+    .from("brands")
+    .insert({ name: brandName, slug })
+    .select("id")
+    .single();
+  return inserted?.id ?? null;
+}
+
+async function resolveOrCreateCategoryId(
+  supabase: ReturnType<typeof createClient>,
+  categoryName?: string
+): Promise<string | null> {
+  if (!categoryName) return null;
+  const slug = slugify(categoryName);
+
+  const { data: existing } = await supabase
+    .from("product_categories")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (existing?.id) return existing.id;
+
+  const { data: inserted } = await supabase
+    .from("product_categories")
+    .insert({ name: categoryName, slug })
+    .select("id")
+    .single();
+  return inserted?.id ?? null;
+}
+
+async function ensureUniqueSlug(
+  supabase: ReturnType<typeof createClient>,
+  candidate: string,
+  sourceUrl: string
+): Promise<string> {
+  let finalSlug = candidate || `product-${crypto.randomUUID().slice(0, 8)}`;
+  for (let i = 0; i < 5; i++) {
+    const { data: existing } = await supabase
+      .from("products")
+      .select("id, source_url")
+      .eq("slug", finalSlug)
+      .maybeSingle();
+    if (!existing || existing.source_url === sourceUrl) return finalSlug;
+    finalSlug = `${candidate}-${crypto.randomUUID().slice(0, 6)}`;
+  }
+  return `${candidate}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+async function extractWithAI(
+  lovableApiKey: string,
+  sourceUrl: string,
+  html: string
+): Promise<ExtractedProduct> {
+  const compacted = compactHtml(html);
+  const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${lovableApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-3-flash-preview",
+      messages: [
+        { role: "system", content: EXTRACTION_PROMPT },
+        {
+          role: "user",
+          content: `SOURCE_URL: ${sourceUrl}\n\nHTML:\n${compacted}`,
+        },
+      ],
+      max_tokens: 2200,
+      temperature: 0.1,
+    }),
+  });
+
+  if (!aiRes.ok) {
+    throw new Error(`AI extraction failed: HTTP ${aiRes.status}`);
+  }
+
+  const aiData = await aiRes.json();
+  const rawText: string = aiData.choices?.[0]?.message?.content ?? "";
+  return parseJsonFromModel(rawText);
+}
+
+function normalizeExtracted(product: ExtractedProduct, sourceUrl: string): ExtractedProduct {
+  const name = product.name?.trim() || "Imported Product";
+  const fallbackSlug = slugify(name);
+  const safeImages = Array.isArray(product.images)
+    ? product.images.filter((img) => typeof img?.url === "string" && img.url.length > 0)
+    : [];
+
+  return {
+    name,
+    slug: product.slug ? slugify(product.slug) : fallbackSlug,
+    short_description: (product.short_description || "").slice(0, 200),
+    description: product.description || "",
+    price: Number.isFinite(product.price) ? Number(product.price) : 0,
+    discount_price:
+      product.discount_price === null || product.discount_price === undefined
+        ? null
+        : Number(product.discount_price),
+    specs: product.specs && typeof product.specs === "object" ? product.specs : {},
+    powers: product.powers || "",
+    ideal_for: product.ideal_for || "",
+    is_featured: Boolean(product.is_featured),
+    is_popular: Boolean(product.is_popular),
+    promo_label: product.promo_label ?? null,
+    stock_quantity:
+      typeof product.stock_quantity === "number" && product.stock_quantity >= 0
+        ? Math.floor(product.stock_quantity)
+        : 10,
+    status:
+      product.status === "draft" || product.status === "out_of_stock" ? product.status : "active",
+    images: safeImages,
+    brand_name: product.brand_name?.trim() || undefined,
+    category_name: product.category_name?.trim() || undefined,
+    product_type: product.product_type?.trim() || undefined,
+    source_currency: product.source_currency ?? null,
+    original_price_text: product.original_price_text ?? null,
+    extra_fields: {
+      ...(product.extra_fields && typeof product.extra_fields === "object"
+        ? product.extra_fields
+        : {}),
+      source_url: sourceUrl,
+    },
+  };
+}
+
+async function importSingleProduct(
+  supabase: ReturnType<typeof createClient>,
+  lovableApiKey: string,
+  sourceUrl: string
+): Promise<{
+  url: string;
+  status: "success" | "error";
+  product_id?: string;
+  product_name?: string;
+  error?: string;
+}> {
+  try {
+    const html = await fetchText(sourceUrl, 18000);
+    const extractedRaw = await extractWithAI(lovableApiKey, sourceUrl, html);
+    const extracted = normalizeExtracted(extractedRaw, sourceUrl);
+
+    const brandId = await resolveOrCreateBrandId(supabase, extracted.brand_name);
+    const categoryId = await resolveOrCreateCategoryId(supabase, extracted.category_name);
+    const uniqueSlug = await ensureUniqueSlug(
+      supabase,
+      extracted.slug || slugify(extracted.name),
+      sourceUrl
+    );
+
+    const productPayload = {
+      name: extracted.name,
+      slug: uniqueSlug,
+      short_description: extracted.short_description || null,
+      description: extracted.description || null,
+      price: extracted.price,
+      discount_price: extracted.discount_price ?? null,
+      specs: extracted.specs ?? {},
+      powers: extracted.powers || null,
+      ideal_for: extracted.ideal_for || null,
+      is_featured: extracted.is_featured ?? false,
+      is_popular: extracted.is_popular ?? false,
+      promo_label: extracted.promo_label ?? null,
+      stock_quantity: extracted.stock_quantity ?? 0,
+      status: extracted.status ?? "active",
+      brand_id: brandId,
+      category_id: categoryId,
+      source_url: sourceUrl,
+      product_type: extracted.product_type ?? null,
+      source_metadata: {
+        source_currency: extracted.source_currency ?? null,
+        original_price_text: extracted.original_price_text ?? null,
+        extra_fields: extracted.extra_fields ?? {},
+      },
+    };
+
+    const { data: productRow, error: productError } = await supabase
+      .from("products")
+      .upsert(productPayload, { onConflict: "source_url" })
+      .select("id")
+      .single();
+
+    if (productError || !productRow) {
+      throw new Error(`Failed to upsert product: ${productError?.message ?? "unknown error"}`);
+    }
+
+    const productId: string = productRow.id;
+
+    await supabase.from("product_images").delete().eq("product_id", productId);
+
+    if (extracted.images.length > 0) {
+      const limitedImages = extracted.images.slice(0, 10);
+      const uploaded = await Promise.all(
+        limitedImages.map(async (img) => ({
+          image_url: await uploadImageToStorage(supabase, img.url, uniqueSlug),
+          alt_text: img.alt_text || extracted.name,
+        }))
+      );
+
+      const imageRows = uploaded.map((img, idx) => ({
+        product_id: productId,
+        image_url: img.image_url,
+        alt_text: img.alt_text,
+        sort_order: idx,
+        is_primary: idx === 0,
+      }));
+
+      await supabase.from("product_images").insert(imageRows);
+    }
+
+    return {
+      url: sourceUrl,
+      status: "success",
+      product_id: productId,
+      product_name: extracted.name,
+    };
+  } catch (error) {
+    return {
+      url: sourceUrl,
+      status: "error",
+      error: (error as Error).message,
+    };
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -101,7 +554,6 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Verify caller is an authenticated admin
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
     return new Response(
@@ -113,7 +565,10 @@ Deno.serve(async (req) => {
   const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: { user: authUser }, error: authError } = await userClient.auth.getUser();
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await userClient.auth.getUser();
   if (authError || !authUser) {
     return new Response(
       JSON.stringify({ error: "Unauthorized" }),
@@ -122,15 +577,12 @@ Deno.serve(async (req) => {
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-  // Check admin role
   const { data: roleData } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", authUser.id)
     .eq("role", "admin")
     .maybeSingle();
-
   if (!roleData) {
     return new Response(
       JSON.stringify({ error: "Admin access required" }),
@@ -138,7 +590,7 @@ Deno.serve(async (req) => {
     );
   }
 
-  let body: { url?: string };
+  let body: ScrapeRequest;
   try {
     body = await req.json();
   } catch {
@@ -148,230 +600,140 @@ Deno.serve(async (req) => {
     );
   }
 
-  const { url } = body;
-  if (!url || typeof url !== "string") {
+  if (!body.url || typeof body.url !== "string") {
     return new Response(
       JSON.stringify({ error: "url is required" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
-  // Create a scraper_runs record
+  let sanitizedUrl: string;
+  try {
+    sanitizedUrl = sanitizeUrl(body.url);
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: (error as Error).message }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const parsedUrl = new URL(sanitizedUrl);
+  const mode = inferMode(parsedUrl, body.mode);
+  const batchSize = mode === "single" ? 1 : clampBatchSize(body.batch_size);
+
   const { data: runRow, error: runInsertError } = await supabase
     .from("scraper_runs")
-    .insert({ url, status: "running" })
+    .insert({ url: sanitizedUrl, status: "running" satisfies ScraperStatus })
     .select("id")
     .single();
 
   if (runInsertError || !runRow) {
-    console.error("Failed to create scraper_runs record:", runInsertError);
     return new Response(
       JSON.stringify({ error: "Failed to initialise scraper run" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
-  const runId: string = runRow.id;
+  const runId = runRow.id as string;
 
-  const markError = async (msg: string) => {
+  const markRun = async (
+    status: ScraperStatus,
+    payload: {
+      product_id?: string | null;
+      error_message?: string | null;
+      extracted_data?: Record<string, unknown>;
+    }
+  ) => {
     await supabase
       .from("scraper_runs")
-      .update({ status: "error", error_message: msg })
+      .update({
+        status,
+        product_id: payload.product_id ?? null,
+        error_message: payload.error_message ?? null,
+        extracted_data: payload.extracted_data ?? null,
+      })
       .eq("id", runId);
   };
 
-  // Fetch the product page
-  let html: string;
   try {
-    const pageRes = await fetch(url, {
-      headers: { "User-Agent": "PawaMore-Scraper/1.0 (+https://pawamore.lovable.app)" },
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!pageRes.ok) {
-      const errMsg = `Failed to fetch URL: HTTP ${pageRes.status}`;
-      await markError(errMsg);
+    const productUrls = await discoverProductUrls(sanitizedUrl, batchSize);
+
+    if (productUrls.length === 0) {
+      const errorMessage =
+        "No product links discovered. Try a direct /product/... URL or a site with product sitemaps.";
+      await markRun("error", { error_message: errorMessage });
       return new Response(
-        JSON.stringify({ run_id: runId, status: "error", error: errMsg }),
+        JSON.stringify({ run_id: runId, status: "error", error: errorMessage }),
         { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    html = await pageRes.text();
-  } catch (fetchErr) {
-    const errMsg = `Network error fetching URL: ${(fetchErr as Error).message}`;
-    await markError(errMsg);
-    return new Response(
-      JSON.stringify({ run_id: runId, status: "error", error: errMsg }),
-      { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
 
-  const compacted = compactHtml(html);
+    const results: Array<{
+      url: string;
+      status: "success" | "error";
+      product_id?: string;
+      product_name?: string;
+      error?: string;
+    }> = [];
 
-  // Ask Gemini to extract product data
-  let extracted: ExtractedProduct;
-  try {
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: EXTRACTION_PROMPT },
-          { role: "user", content: compacted },
-        ],
-        max_tokens: 2000,
-        temperature: 0.1,
-      }),
-    });
+    for (const productUrl of productUrls) {
+      const result = await importSingleProduct(supabase, lovableApiKey, productUrl);
+      results.push(result);
+    }
 
-    if (!aiRes.ok) {
-      const errMsg = `AI extraction failed: HTTP ${aiRes.status}`;
-      await markError(errMsg);
+    const successes = results.filter((r) => r.status === "success");
+    const failures = results.filter((r) => r.status === "error");
+    const summary = {
+      mode,
+      requested_batch_size: batchSize,
+      discovered_urls: productUrls,
+      processed_count: results.length,
+      success_count: successes.length,
+      failure_count: failures.length,
+      results,
+    };
+
+    if (successes.length === 0) {
+      await markRun("error", {
+        error_message: failures[0]?.error ?? "All imports failed",
+        extracted_data: summary as unknown as Record<string, unknown>,
+      });
       return new Response(
-        JSON.stringify({ run_id: runId, status: "error", error: errMsg }),
+        JSON.stringify({
+          run_id: runId,
+          status: "error",
+          error: failures[0]?.error ?? "All imports failed",
+          summary,
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const aiData = await aiRes.json();
-    const rawText: string = aiData.choices?.[0]?.message?.content ?? "";
+    await markRun("success", {
+      product_id: successes[0].product_id ?? null,
+      extracted_data: summary as unknown as Record<string, unknown>,
+    });
 
-    // Strip optional markdown code fence if the model wraps its answer
-    const jsonText = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-    extracted = JSON.parse(jsonText) as ExtractedProduct;
-  } catch (aiErr) {
-    const errMsg = `AI parsing error: ${(aiErr as Error).message}`;
-    await markError(errMsg);
     return new Response(
-      JSON.stringify({ run_id: runId, status: "error", error: errMsg }),
+      JSON.stringify({
+        run_id: runId,
+        status: "success",
+        mode,
+        imported_count: successes.length,
+        failed_count: failures.length,
+        product_id: successes[0].product_id,
+        product_name: successes[0].product_name,
+        products: successes,
+        failures,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    const message = (error as Error).message || "Unexpected scraper error";
+    await markRun("error", { error_message: message });
+    return new Response(
+      JSON.stringify({ run_id: runId, status: "error", error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
-
-  // Resolve or create brand
-  let brandId: string | null = null;
-  if (extracted.brand_name) {
-    const brandSlug = slugify(extracted.brand_name);
-    const { data: existingBrand } = await supabase
-      .from("brands")
-      .select("id")
-      .eq("slug", brandSlug)
-      .maybeSingle();
-    if (existingBrand) {
-      brandId = existingBrand.id;
-    } else {
-      const { data: newBrand } = await supabase
-        .from("brands")
-        .insert({ name: extracted.brand_name, slug: brandSlug })
-        .select("id")
-        .single();
-      if (newBrand) brandId = newBrand.id;
-    }
-  }
-
-  // Resolve or create category
-  let categoryId: string | null = null;
-  if (extracted.category_name) {
-    const catSlug = slugify(extracted.category_name);
-    const { data: existingCat } = await supabase
-      .from("product_categories")
-      .select("id")
-      .eq("slug", catSlug)
-      .maybeSingle();
-    if (existingCat) {
-      categoryId = existingCat.id;
-    } else {
-      const { data: newCat } = await supabase
-        .from("product_categories")
-        .insert({ name: extracted.category_name, slug: catSlug })
-        .select("id")
-        .single();
-      if (newCat) categoryId = newCat.id;
-    }
-  }
-
-  // Ensure slug is unique — append a short random suffix if needed
-  let finalSlug = extracted.slug || slugify(extracted.name);
-  const { count: slugCount } = await supabase
-    .from("products")
-    .select("id", { count: "exact", head: true })
-    .eq("slug", finalSlug);
-  if (slugCount && slugCount > 0) {
-    finalSlug = `${finalSlug}-${crypto.randomUUID().slice(0, 8)}`;
-  }
-
-  // Upsert the product (slug-based deduplication)
-  const productPayload = {
-    name: extracted.name,
-    slug: finalSlug,
-    short_description: extracted.short_description || null,
-    description: extracted.description || null,
-    price: extracted.price,
-    discount_price: extracted.discount_price ?? null,
-    specs: extracted.specs ?? {},
-    powers: extracted.powers || null,
-    ideal_for: extracted.ideal_for || null,
-    is_featured: extracted.is_featured ?? false,
-    is_popular: extracted.is_popular ?? false,
-    promo_label: extracted.promo_label ?? null,
-    stock_quantity: extracted.stock_quantity ?? 0,
-    status: extracted.status ?? "active",
-    brand_id: brandId,
-    category_id: categoryId,
-  };
-
-  const { data: productRow, error: productError } = await supabase
-    .from("products")
-    .upsert(productPayload, { onConflict: "slug" })
-    .select("id")
-    .single();
-
-  if (productError || !productRow) {
-    const errMsg = `Failed to upsert product: ${productError?.message ?? "unknown"}`;
-    await markError(errMsg);
-    return new Response(
-      JSON.stringify({ run_id: runId, status: "error", error: errMsg }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
-  const productId: string = productRow.id;
-
-  // Insert product images (skip if no images extracted)
-  if (Array.isArray(extracted.images) && extracted.images.length > 0) {
-    const imageRows = extracted.images.map((img, idx) => ({
-      product_id: productId,
-      image_url: img.url,
-      alt_text: img.alt_text || extracted.name,
-      sort_order: idx,
-      is_primary: idx === 0,
-    }));
-
-    // Remove old images so a re-scrape stays fresh
-    await supabase.from("product_images").delete().eq("product_id", productId);
-    await supabase.from("product_images").insert(imageRows);
-  }
-
-  // Update the scraper_runs row with success
-  await supabase
-    .from("scraper_runs")
-    .update({
-      status: "success",
-      product_id: productId,
-      extracted_data: extracted as unknown as Record<string, unknown>,
-    })
-    .eq("id", runId);
-
-  return new Response(
-    JSON.stringify({
-      run_id: runId,
-      product_id: productId,
-      product_name: extracted.name,
-      status: "success",
-    }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
 });

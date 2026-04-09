@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   isValidUrl,
+  clampBatchSize,
   scraperStatusMeta,
   isRunActive,
   type ScraperRun,
@@ -60,6 +61,24 @@ describe("scraperStatusMeta", () => {
 
   it("error → red colour", () => {
     expect(scraperStatusMeta("error").colour).toContain("red");
+  });
+});
+
+describe("clampBatchSize", () => {
+  it("defaults to 5 when missing", () => {
+    expect(clampBatchSize(undefined)).toBe(5);
+  });
+
+  it("clamps low values to 1", () => {
+    expect(clampBatchSize(0)).toBe(1);
+  });
+
+  it("clamps high values to 20", () => {
+    expect(clampBatchSize(100)).toBe(20);
+  });
+
+  it("rounds down floats", () => {
+    expect(clampBatchSize(7.9)).toBe(7);
   });
 });
 

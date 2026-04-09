@@ -577,6 +577,13 @@ Two scraper approaches are available:
 | **Quick Import** (modal) | `scrape-product-from-url` | "Import from URL" button in Products tab | `product_import_logs` |
 | **Background Scraper** (tab) | `scrape-product` | "Scraper" tab in Admin Dashboard | `scraper_runs` |
 
+`scrape-product` now supports:
+
+- Single product import (`mode: "single"`, direct `/product/...` URL)
+- Bulk site import (`mode: "site"`, root/listing URL + `batch_size` 1-20)
+- Automatic image ingest to Supabase Storage (`product-images` bucket)
+- Source metadata persistence (`products.source_url`, `products.product_type`, `products.source_metadata`)
+
 ### Running locally
 
 ```sh

@@ -4,6 +4,7 @@
  */
 
 export type ScraperStatus = "pending" | "running" | "success" | "error";
+export type ScrapeMode = "single" | "site";
 
 export interface ScraperRun {
   id: string;
@@ -18,13 +19,20 @@ export interface ScraperRun {
 
 export interface ScrapeRequest {
   url: string;
+  mode?: ScrapeMode;
+  batch_size?: number;
 }
 
 export interface ScrapeResponse {
   run_id: string;
   status: ScraperStatus;
+  mode?: ScrapeMode;
+  imported_count?: number;
+  failed_count?: number;
   product_id?: string;
   product_name?: string;
+  products?: Array<{ product_id?: string; product_name?: string; url: string }>;
+  failures?: Array<{ url: string; error?: string }>;
   error?: string;
 }
 
@@ -38,6 +46,11 @@ export function isValidUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+export function clampBatchSize(batchSize?: number): number {
+  if (batchSize === undefined || batchSize === null || Number.isNaN(batchSize)) return 5;
+  return Math.max(1, Math.min(20, Math.floor(batchSize)));
 }
 
 /**
