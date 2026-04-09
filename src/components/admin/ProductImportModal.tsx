@@ -33,6 +33,9 @@ interface ScrapedProduct {
   scraped_at: string;
 }
 
+const toSlug = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
 const ProductImportModal = ({ open, onOpenChange, onSuccess }: ProductImportModalProps) => {
   const [step, setStep] = useState<'input' | 'loading' | 'preview'>('input');
   const [url, setUrl] = useState('');
@@ -142,9 +145,51 @@ const ProductImportModal = ({ open, onOpenChange, onSuccess }: ProductImportModa
     setSaving(true);
     try {
       // Create product slug
-      const slug = editedData.name?.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '') || '';
+      const slug = toSlug(editedData.name || scrapedData.name || '');
+      const brandName = (editedData.brand || scrapedData.brand || '').trim();
+      const categoryName = (editedData.category || scrapedData.category || '').trim();
+
+      let brandId: string | null = null;
+      if (brandName) {
+        const brandSlug = toSlug(brandName);
+        const { data: existingBrand } = await supabase
+          .from('brands')
+          .select('id')
+          .eq('slug', brandSlug)
+          .maybeSingle();
+
+        if (existingBrand?.id) {
+          brandId = existingBrand.id;
+        } else {
+          const { data: createdBrand } = await supabase
+            .from('brands')
+            .insert({ name: brandName, slug: brandSlug })
+            .select('id')
+            .single();
+          brandId = createdBrand?.id ?? null;
+        }
+      }
+
+      let categoryId: string | null = null;
+      if (categoryName) {
+        const categorySlug = toSlug(categoryName);
+        const { data: existingCategory } = await supabase
+          .from('product_categories')
+          .select('id')
+          .eq('slug', categorySlug)
+          .maybeSingle();
+
+        if (existingCategory?.id) {
+          categoryId = existingCategory.id;
+        } else {
+          const { data: createdCategory } = await supabase
+            .from('product_categories')
+            .insert({ name: categoryName, slug: categorySlug })
+            .select('id')
+            .single();
+          categoryId = createdCategory?.id ?? null;
+        }
+      }
 
       // Insert product
       const { data: product, error: productError } = await supabase
@@ -155,13 +200,19 @@ const ProductImportModal = ({ open, onOpenChange, onSuccess }: ProductImportModa
           description: editedData.description || scrapedData.description,
           short_description: editedData.short_description || scrapedData.short_description,
           price: editedData.price || scrapedData.price,
-          brand: editedData.brand || scrapedData.brand,
-          category: editedData.category || scrapedData.category,
+          brand_id: brandId,
+          category_id: categoryId,
           stock_quantity: 10, // Default stock
           status,
           is_featured: false,
-          meta_description: scrapedData.meta_description,
-          meta_keywords: scrapedData.seo_keywords,
+          source_url: scrapedData.source_url || url,
+          source_metadata: {
+            meta_description: scrapedData.meta_description || null,
+            seo_keywords: scrapedData.seo_keywords || null,
+            key_features: scrapedData.key_features || [],
+            benefits: scrapedData.benefits || [],
+            nigerian_context: scrapedData.nigerian_context || null,
+          },
         })
         .select()
         .single();
