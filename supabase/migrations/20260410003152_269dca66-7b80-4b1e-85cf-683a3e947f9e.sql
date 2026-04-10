@@ -1,6 +1,9 @@
+-- Idempotent safety migration for scraper schema.
+-- Tables already exist in earlier migrations on this branch; this ensures
+-- environments that missed those migrations still converge safely.
 
--- Create scraper_runs table for the ScraperManager UI
-CREATE TABLE public.scraper_runs (
+-- scraper_runs
+CREATE TABLE IF NOT EXISTS public.scraper_runs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   url TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending',
@@ -13,19 +16,35 @@ CREATE TABLE public.scraper_runs (
 
 ALTER TABLE public.scraper_runs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Admins can manage scraper runs"
-  ON public.scraper_runs FOR ALL
-  TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'))
-  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'scraper_runs'
+      AND policyname = 'Admins can manage scraper runs'
+  ) THEN
+    CREATE POLICY "Admins can manage scraper runs"
+      ON public.scraper_runs FOR ALL
+      TO authenticated
+      USING (public.has_role(auth.uid(), 'admin'))
+      WITH CHECK (public.has_role(auth.uid(), 'admin'));
+  END IF;
+END
+$$;
 
+DROP TRIGGER IF EXISTS update_scraper_runs_updated_at ON public.scraper_runs;
 CREATE TRIGGER update_scraper_runs_updated_at
   BEFORE UPDATE ON public.scraper_runs
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
--- Create product_import_logs table for the ProductImportModal
-CREATE TABLE public.product_import_logs (
+CREATE INDEX IF NOT EXISTS idx_scraper_runs_status
+  ON public.scraper_runs (status, created_at);
+
+-- product_import_logs
+CREATE TABLE IF NOT EXISTS public.product_import_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   source_url TEXT NOT NULL,
   imported_by UUID,
@@ -41,21 +60,36 @@ CREATE TABLE public.product_import_logs (
 
 ALTER TABLE public.product_import_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Admins can manage import logs"
-  ON public.product_import_logs FOR ALL
-  TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'))
-  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'product_import_logs'
+      AND policyname = 'Admins can manage import logs'
+  ) THEN
+    CREATE POLICY "Admins can manage import logs"
+      ON public.product_import_logs FOR ALL
+      TO authenticated
+      USING (public.has_role(auth.uid(), 'admin'))
+      WITH CHECK (public.has_role(auth.uid(), 'admin'));
+  END IF;
+END
+$$;
 
+DROP TRIGGER IF EXISTS update_product_import_logs_updated_at ON public.product_import_logs;
 CREATE TRIGGER update_product_import_logs_updated_at
   BEFORE UPDATE ON public.product_import_logs
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
--- Add missing columns to products table
+-- products source columns
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS source_url TEXT;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS source_metadata JSONB DEFAULT '{}'::jsonb;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS product_type TEXT;
 
--- Add unique constraint on source_url for upsert support (nullable, so only non-null values are unique)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_products_source_url ON public.products(source_url) WHERE source_url IS NOT NULL;
+-- Transitional unique index (next migration replaces this with unique constraint)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_products_source_url
+  ON public.products(source_url)
+  WHERE source_url IS NOT NULL;
