@@ -93,6 +93,12 @@ Should return `302 Found` with `Location: https://pawamore.lovable.app/products/
 2. Should show rich preview with product image, name, price
 3. Click the link → opens clean pawamore.lovable.app URL
 
+### Static page previews now supported:
+- `/solar-calculator`
+- `/resources`
+- `/resources/buyers-guide`
+- `/faqs`
+
 ## Troubleshooting
 
 ### Preview not showing?

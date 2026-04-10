@@ -5,6 +5,7 @@ import QuickBuyButton from "@/components/QuickBuyButton";
 import WishlistButton from "@/components/WishlistButton";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import OptimizedImage from "@/components/OptimizedImage";
+import { buildOgProductUrl } from "@/lib/ogProxy";
 
 interface Product {
   id: string;
@@ -34,8 +35,7 @@ const ProductCard = ({ product, onAddToCart, isComparing, onToggleCompare, compa
   const outOfStock = product.stock_quantity !== null && product.stock_quantity !== undefined && product.stock_quantity <= 0;
   const effectivePrice = product.discount_price ?? product.price;
   // Cloudflare Worker for rich social previews
-  const OG_PROXY_BASE = 'https://pawamore-og-proxy.rytegrid.workers.dev';
-  const shareUrl = `${OG_PROXY_BASE}/products/${encodeURIComponent(product.slug)}`;
+  const shareUrl = buildOgProductUrl(product.slug);
   const cleanProductUrl = `https://pawamore.lovable.app/products/${encodeURIComponent(product.slug)}`;
 
   return (

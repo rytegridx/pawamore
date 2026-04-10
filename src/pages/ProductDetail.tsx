@@ -25,6 +25,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import { toast } from "@/hooks/use-toast";
 import useSEO from "@/hooks/useSEO";
 import { getRelatedProducts, type RelatedProduct } from "@/lib/related-products";
+import { buildOgProductUrl } from "@/lib/ogProxy";
 
 const ProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -45,9 +46,8 @@ const ProductDetail = () => {
   const productUrl = typeof window !== "undefined" ? window.location.href : "";
   
   // Cloudflare Worker for rich social previews (crawlers get OG tags, humans get 302 redirect)
-  const OG_PROXY_BASE = 'https://pawamore-og-proxy.rytegrid.workers.dev';
   const shareUrl = product?.slug
-    ? `${OG_PROXY_BASE}/products/${encodeURIComponent(product.slug)}`
+    ? buildOgProductUrl(product.slug)
     : productUrl;
   
   // Format price for display

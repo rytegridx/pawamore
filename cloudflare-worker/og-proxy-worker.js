@@ -57,6 +57,37 @@ function isCrawler(userAgent) {
   return CRAWLER_PATTERNS.some(pattern => ua.includes(pattern.toLowerCase()));
 }
 
+const STATIC_PAGE_PREVIEWS = {
+  "/solar-calculator": {
+    title: "Solar Calculator - Estimate Your Power Needs | PawaMore",
+    description:
+      "Use our free solar calculator to estimate battery, inverter, and panel sizing for homes and businesses in Nigeria.",
+    image: "/favicon.png",
+    type: "website",
+  },
+  "/resources": {
+    title: "Solar Resources Hub — PawaMore Systems",
+    description:
+      "Practical resources for Nigerian buyers: calculator, buyer's guide, FAQs, and expert insights.",
+    image: "/favicon.png",
+    type: "website",
+  },
+  "/resources/buyers-guide": {
+    title: "Solar Buyer's Guide (Nigeria) — PawaMore Systems",
+    description:
+      "A practical buying guide covering sizing, batteries, inverters, budgeting, and installer vetting.",
+    image: "/favicon.png",
+    type: "article",
+  },
+  "/faqs": {
+    title: "Frequently Asked Questions — PawaMore Systems",
+    description:
+      "Answers to common questions about pricing, sizing, battery lifespan, delivery, and support.",
+    image: "/favicon.png",
+    type: "website",
+  },
+};
+
 async function fetchProductFromSupabase(slug, env) {
   const url = `${env.SUPABASE_URL}/rest/v1/products?slug=eq.${encodeURIComponent(slug)}&status=eq.active&select=id,name,slug,short_description,description,price,discount_price,stock_quantity,product_images(image_url,is_primary)`;
   
@@ -205,6 +236,46 @@ function generateOGHtml(product, canonicalUrl, appUrl) {
 </html>`;
 }
 
+function generateStaticPageOGHtml(config, canonicalUrl, appUrl, path) {
+  const targetUrl = `${appUrl}${path}`;
+  const image = config.image?.startsWith("http") ? config.image : `${appUrl}${config.image || "/favicon.png"}`;
+
+  return `<!DOCTYPE html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>${escapeHtml(config.title)}</title>
+  <meta name="description" content="${escapeHtml(config.description)}">
+  <link rel="canonical" href="${escapeHtml(targetUrl)}">
+
+  <meta property="og:type" content="${escapeHtml(config.type || "website")}">
+  <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
+  <meta property="og:title" content="${escapeHtml(config.title)}">
+  <meta property="og:description" content="${escapeHtml(config.description)}">
+  <meta property="og:image" content="${escapeHtml(image)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${escapeHtml(config.title)}">
+  <meta property="og:site_name" content="PawaMore Systems">
+  <meta property="og:locale" content="en_NG">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="${escapeHtml(canonicalUrl)}">
+  <meta name="twitter:title" content="${escapeHtml(config.title)}">
+  <meta name="twitter:description" content="${escapeHtml(config.description)}">
+  <meta name="twitter:image" content="${escapeHtml(image)}">
+
+  <meta http-equiv="refresh" content="0;url=${escapeHtml(targetUrl)}">
+</head>
+<body>
+  <p>Redirecting to PawaMore...</p>
+  <script>window.location.href="${escapeHtml(targetUrl)}";</script>
+</body>
+</html>`;
+}
+
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -249,7 +320,24 @@ export default {
     // Default app URL (can be overridden by env var)
     const appUrl = env.APP_URL || 'https://pawamore.lovable.app';
     
-    // Parse the path - expecting /products/slug or /p/slug
+    const staticPreview = STATIC_PAGE_PREVIEWS[url.pathname];
+    if (staticPreview) {
+      if (!isCrawler(userAgent)) {
+        return Response.redirect(`${appUrl}${url.pathname}${url.search}`, 302);
+      }
+
+      const html = generateStaticPageOGHtml(staticPreview, url.href, appUrl, url.pathname);
+      return new Response(html, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600',
+          'X-Robots-Tag': 'noindex, nofollow',
+        },
+      });
+    }
+
+    // Parse product path - expecting /products/slug or /p/slug
     const pathMatch = url.pathname.match(/^\/(products?|p)\/([^\/]+)\/?$/);
     
     if (!pathMatch) {

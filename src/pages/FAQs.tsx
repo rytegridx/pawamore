@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/accordion";
 import useSEO from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
+import { buildOgPageUrl } from "@/lib/ogProxy";
 
 interface FAQItem {
   id: string;
@@ -172,6 +173,8 @@ const FAQs = () => {
     title: "Frequently Asked Questions — PawaMore Systems",
     description:
       "Answers to common questions about solar installation cost, battery lifespan, installation time, payment plans, and more. PawaMore Systems Nigeria.",
+    url: buildOgPageUrl("/faqs"),
+    image: "/favicon.png",
   });
 
   useEffect(() => {

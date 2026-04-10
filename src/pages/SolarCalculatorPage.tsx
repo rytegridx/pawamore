@@ -16,6 +16,7 @@ import {
 } from "@/lib/solar-product-recommendations";
 import { supabase } from "@/integrations/supabase/client";
 import useSEO from "@/hooks/useSEO";
+import { buildOgPageUrl } from "@/lib/ogProxy";
 
 let idCounter = 0;
 const nextId = () => String(++idCounter);
@@ -29,6 +30,8 @@ const SolarCalculatorPage = () => {
     title: "Solar Calculator - Calculate Your Power Needs | PawaMore",
     description:
       "Use our free solar calculator to estimate your power needs and get tailored recommendations for batteries, inverters, and solar panels in Nigeria.",
+    url: buildOgPageUrl("/solar-calculator"),
+    image: "/favicon.png",
   });
 
   useEffect(() => {

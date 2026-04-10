@@ -10,6 +10,7 @@ import {
 import Layout from "@/components/Layout";
 import ScrollReveal from "@/components/ScrollReveal";
 import useSEO from "@/hooks/useSEO";
+import { buildOgPageUrl } from "@/lib/ogProxy";
 
 const guideSections = [
   {
@@ -107,6 +108,8 @@ const BuyersGuide = () => {
     title: "Solar Buyer's Guide (Nigeria) — PawaMore Systems",
     description:
       "A practical buyer's guide for Nigerian homes and businesses: sizing, batteries, inverters, budgeting, installer vetting, and maintenance.",
+    url: buildOgPageUrl("/resources/buyers-guide"),
+    image: "/favicon.png",
   });
 
   return (

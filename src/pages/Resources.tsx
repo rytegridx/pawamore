@@ -7,12 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { blogPosts } from "@/data/blogPosts";
 import useSEO from "@/hooks/useSEO";
+import { buildOgPageUrl } from "@/lib/ogProxy";
 
 const Resources = () => {
   useSEO({
     title: "Solar Resources Hub — PawaMore Systems",
     description:
       "Practical solar resources for Nigeria: buyer's guide, FAQs, calculator, and expert blog articles to help you choose the right system.",
+    url: buildOgPageUrl("/resources"),
+    image: "/favicon.png",
   });
 
   const featuredPosts = blogPosts.slice(0, 4);
