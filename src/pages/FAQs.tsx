@@ -122,7 +122,7 @@ const normalizeCategory = (category: string): string => {
   const raw = category
     .toLowerCase()
     .trim()
-    .replaceAll("&", "and")
+    .replace(/&/g, "and")
     .replace(/\s+/g, "_");
 
   if (raw === "getting_started" || raw === "general") {
