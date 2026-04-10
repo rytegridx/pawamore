@@ -116,7 +116,7 @@ const ResultsPanel = ({ results }: ResultsPanelProps) => {
           ].map(([label, cost]) => (
             <div key={label} className="flex items-center justify-between border-b border-accent/10 py-1.5">
               <span className="text-sm text-foreground">{label}</span>
-              <span className="text-sm font-semibold">{formatNaira(cost)}</span>
+              <span className="text-sm font-semibold">{formatNaira(Number(cost))}</span>
             </div>
           ))}
           <div className="flex items-center justify-between pt-2">
