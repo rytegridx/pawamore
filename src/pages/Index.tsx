@@ -328,8 +328,12 @@ const Index = () => {
           </div>
 
           <div className="text-center mt-8 sm:mt-10">
-            <Link to="/products">
-              <Button variant="default" size="lg" className="min-h-[48px]">
+            <Link to="/products" className="block w-full sm:inline-block sm:w-auto">
+              <Button
+                variant="default"
+                size="lg"
+                className="min-h-[48px] w-full sm:w-auto max-w-full whitespace-normal text-center leading-snug h-auto py-3 px-5"
+              >
                 See All Products & Pricing <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>

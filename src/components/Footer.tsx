@@ -8,12 +8,12 @@ const Footer = () => {
   return (
     <footer className="bg-forest text-primary-foreground relative">
       {/* Mascot sitting on top of footer */}
-      <div className="absolute left-1/2 -translate-x-1/2 -top-10 sm:-top-14 md:-top-18 z-20 pointer-events-none select-none">
+      <div className="absolute left-1/2 -translate-x-1/2 -top-12 sm:-top-16 md:-top-20 z-20 pointer-events-none select-none">
         <img 
           src={mascotFooter} 
           alt="" 
           aria-hidden="true"
-          className="w-14 sm:w-20 md:w-26 h-auto drop-shadow-xl"
+          className="w-16 sm:w-24 md:w-32 h-auto drop-shadow-xl"
         />
       </div>
       <div className="kente-strip" />

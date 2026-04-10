@@ -93,8 +93,14 @@ const WhyPawamore = () => {
     {/* CTA */}
     <section className="py-16">
       <div className="container text-center">
-        <Link to="/contact">
-          <Button variant="amber" size="xl">Experience the PawaMore Difference — Book Free Audit →</Button>
+        <Link to="/contact" className="block w-full sm:inline-block sm:w-auto max-w-xl mx-auto">
+          <Button
+            variant="amber"
+            size="xl"
+            className="w-full sm:w-auto max-w-full whitespace-normal text-center leading-snug h-auto py-4 px-5"
+          >
+            Experience the PawaMore Difference — Book Free Audit →
+          </Button>
         </Link>
       </div>
     </section>

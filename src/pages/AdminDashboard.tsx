@@ -94,6 +94,7 @@ const statusIcons: Record<string, any> = {
 };
 
 const orderStatuses = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
+const REQUEST_TIMEOUT_MS = 12000;
 
 const AdminDashboard = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -110,6 +111,14 @@ const AdminDashboard = () => {
   const [serverVerifiedAdmin, setServerVerifiedAdmin] = useState<boolean | null>(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
 
+  const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, label: string) =>
+    Promise.race<T>([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs)
+      ),
+    ]);
+
   // Server-side admin verification — prevents DevTools bypass
   useEffect(() => {
     if (loading) return;
@@ -118,12 +127,27 @@ const AdminDashboard = () => {
       return;
     }
     const verifyAdmin = async () => {
-      const { data } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
-      if (!data) {
+      try {
+        const { data, error } = await withTimeout(
+          supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }),
+          REQUEST_TIMEOUT_MS,
+          "Admin permission check"
+        );
+        if (error || !data) {
+          setServerVerifiedAdmin(false);
+          navigate("/");
+          return;
+        }
+        setServerVerifiedAdmin(true);
+      } catch (error) {
+        setServerVerifiedAdmin(false);
+        toast({
+          title: "Admin check failed",
+          description: error instanceof Error ? error.message : "Could not verify admin access",
+          variant: "destructive",
+        });
         navigate("/");
-        return;
       }
-      setServerVerifiedAdmin(true);
     };
     verifyAdmin();
   }, [user, loading, navigate]);
@@ -136,39 +160,77 @@ const AdminDashboard = () => {
 
   const loadAllData = async () => {
     setLoadingData(true);
-    await Promise.all([fetchProducts(), fetchOrders(), fetchReviews(), fetchNewsletters()]);
+    const tasks: Array<[string, () => Promise<void>]> = [
+      ["products", fetchProducts],
+      ["orders", fetchOrders],
+      ["reviews", fetchReviews],
+      ["newsletters", fetchNewsletters],
+    ];
+
+    const results = await Promise.allSettled(tasks.map(([, run]) => run()));
+    const failedLoads = results.flatMap((result, index) =>
+      result.status === "rejected" ? [tasks[index][0]] : []
+    );
+
+    if (failedLoads.length > 0) {
+      toast({
+        title: "Partial admin data loaded",
+        description: `Could not load: ${failedLoads.join(", ")}`,
+        variant: "destructive",
+      });
+    }
     setLoadingData(false);
   };
 
   const fetchProducts = async () => {
-    const { data } = await supabase
-      .from("products")
-      .select("*, product_images(image_url, is_primary)")
-      .order("created_at", { ascending: false });
+    const { data, error } = await withTimeout(
+      supabase
+        .from("products")
+        .select("*, product_images(image_url, is_primary)")
+        .order("created_at", { ascending: false }),
+      REQUEST_TIMEOUT_MS,
+      "Load products"
+    );
+    if (error) throw error;
     setProducts((data as any) || []);
   };
 
   const fetchOrders = async () => {
-    const { data } = await supabase
-      .from("orders")
-      .select("*, order_items(id, product_name, quantity, unit_price)")
-      .order("created_at", { ascending: false });
+    const { data, error } = await withTimeout(
+      supabase
+        .from("orders")
+        .select("*, order_items(id, product_name, quantity, unit_price)")
+        .order("created_at", { ascending: false }),
+      REQUEST_TIMEOUT_MS,
+      "Load orders"
+    );
+    if (error) throw error;
     setOrders((data as any) || []);
   };
 
   const fetchReviews = async () => {
-    const { data } = await supabase
-      .from("product_reviews")
-      .select("*, products(name)")
-      .order("created_at", { ascending: false });
+    const { data, error } = await withTimeout(
+      supabase
+        .from("product_reviews")
+        .select("*, products(name)")
+        .order("created_at", { ascending: false }),
+      REQUEST_TIMEOUT_MS,
+      "Load reviews"
+    );
+    if (error) throw error;
     setReviews((data as any) || []);
   };
 
   const fetchNewsletters = async () => {
-    const { data } = await supabase
-      .from("newsletter_subscriptions")
-      .select("*")
-      .order("subscribed_at", { ascending: false });
+    const { data, error } = await withTimeout(
+      supabase
+        .from("newsletter_subscriptions")
+        .select("*")
+        .order("subscribed_at", { ascending: false }),
+      REQUEST_TIMEOUT_MS,
+      "Load newsletters"
+    );
+    if (error) throw error;
     setNewsletters((data as any) || []);
   };
 
