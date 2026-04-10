@@ -410,6 +410,56 @@ export type Database = {
           },
         ]
       }
+      product_import_logs: {
+        Row: {
+          ai_response: Json | null
+          created_at: string
+          error_message: string | null
+          id: string
+          imported_by: string | null
+          original_data: Json | null
+          processed_data: Json | null
+          product_id: string | null
+          source_url: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ai_response?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          imported_by?: string | null
+          original_data?: Json | null
+          processed_data?: Json | null
+          product_id?: string | null
+          source_url: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_response?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          imported_by?: string | null
+          original_data?: Json | null
+          processed_data?: Json | null
+          product_id?: string | null
+          source_url?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_import_logs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           content: string | null
@@ -541,9 +591,12 @@ export type Database = {
           name: string
           powers: string | null
           price: number
+          product_type: string | null
           promo_label: string | null
           short_description: string | null
           slug: string
+          source_metadata: Json | null
+          source_url: string | null
           specs: Json | null
           status: string | null
           stock_quantity: number | null
@@ -562,9 +615,12 @@ export type Database = {
           name: string
           powers?: string | null
           price: number
+          product_type?: string | null
           promo_label?: string | null
           short_description?: string | null
           slug: string
+          source_metadata?: Json | null
+          source_url?: string | null
           specs?: Json | null
           status?: string | null
           stock_quantity?: number | null
@@ -583,9 +639,12 @@ export type Database = {
           name?: string
           powers?: string | null
           price?: number
+          product_type?: string | null
           promo_label?: string | null
           short_description?: string | null
           slug?: string
+          source_metadata?: Json | null
+          source_url?: string | null
           specs?: Json | null
           status?: string | null
           stock_quantity?: number | null
@@ -672,6 +731,47 @@ export type Database = {
             columns: ["review_id"]
             isOneToOne: false
             referencedRelation: "product_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scraper_runs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          extracted_data: Json | null
+          id: string
+          product_id: string | null
+          status: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          extracted_data?: Json | null
+          id?: string
+          product_id?: string | null
+          status?: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          extracted_data?: Json | null
+          id?: string
+          product_id?: string | null
+          status?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scraper_runs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
