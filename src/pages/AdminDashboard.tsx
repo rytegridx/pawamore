@@ -665,7 +665,7 @@ const AdminDashboard = () => {
                   }}>Select by filter</Button>
                 </div>
                 {selectedCount > 0 && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 overflow-x-auto pb-1">
                     <Button size="sm" variant="destructive" onClick={handleBulkDelete}>Delete ({selectedCount})</Button>
                     <Button size="sm" onClick={() => handleBulkUpdateStatus('active')}>Publish</Button>
                     <Button size="sm" onClick={() => handleBulkUpdateStatus('draft')}>Unpublish</Button>
