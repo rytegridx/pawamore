@@ -29,40 +29,16 @@ interface AIRewrittenData {
   price_ngn: number;
 }
 
-const siteSelectors: Record<string, {
-  name: string[];
-  price: string[];
-  images: string[];
-  description: string[];
-  specs: string[];
-  brand?: string[];
-}> = {
-  'ecoflow.com': {
-    name: ['.product-title', 'h1[class*="product"]', '.product-name'],
-    price: ['.price', '[class*="price-value"]', '[data-price]'],
-    images: ['.product-gallery img', '.product-image img', '[class*="product-img"]'],
-    description: ['.product-description', '[class*="description"]', '.product-details'],
-    specs: ['.specifications', '.specs', '[class*="specification"]'],
-    brand: ['.brand', '[data-brand]'],
-  },
-  'default': {
-    name: ['h1', '[class*="product-title"]', '[class*="product-name"]', '[itemprop="name"]'],
-    price: ['[class*="price"]', '[itemprop="price"]', '[data-price]'],
-    images: ['[class*="product"] img', '[class*="gallery"] img', 'img[alt*="product"]'],
-    description: ['[class*="description"]', '[itemprop="description"]', '.product-info'],
-    specs: ['[class*="spec"]', 'table', '.product-details'],
-    brand: ['[class*="brand"]', '[itemprop="brand"]'],
-  }
-};
-
 function compactHtml(raw: string): string {
   let text = raw;
-  // Remove scripts and styles
   text = text.replace(/<script\b[^>]*>[\s\S]*?<\/script[^>]*>/gi, '');
   text = text.replace(/<style\b[^>]*>[\s\S]*?<\/style[^>]*>/gi, '');
   text = text.replace(/<!--[\s\S]*?-->/g, '');
+  text = text.replace(/<svg\b[^>]*>[\s\S]*?<\/svg[^>]*>/gi, '');
+  text = text.replace(/<nav\b[^>]*>[\s\S]*?<\/nav[^>]*>/gi, '');
+  text = text.replace(/<footer\b[^>]*>[\s\S]*?<\/footer[^>]*>/gi, '');
   text = text.replace(/\s{2,}/g, ' ');
-  return text.slice(0, 45000);
+  return text.slice(0, 60000);
 }
 
 async function scrapeProductPage(url: string): Promise<ProductData> {
@@ -70,8 +46,8 @@ async function scrapeProductPage(url: string): Promise<ProductData> {
 
   const response = await fetch(url, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.9',
     },
     redirect: 'follow',
@@ -82,47 +58,102 @@ async function scrapeProductPage(url: string): Promise<ProductData> {
   }
 
   const html = await response.text();
-  const domain = new URL(url).hostname.replace('www.', '');
-  const selectors = siteSelectors[domain] || siteSelectors['default'];
+  console.log(`Fetched ${url}: ${html.length} chars`);
 
-  const extractText = (keywords: string[], html: string): string => {
-    for (const selector of keywords) {
-      const regex = new RegExp(`<[^>]*class=["'][^"']*${selector}[^"']*["'][^>]*>([^<]+)<`, 'i');
-      const match = html.match(regex);
-      if (match?.[1]?.trim()) return match[1].trim();
-    }
-    for (const keyword of keywords) {
-      const regex = new RegExp(`<[^>]*${keyword}[^>]*>([^<]+)<`, 'i');
-      const match = html.match(regex);
-      if (match?.[1]?.trim()) return match[1].trim();
-    }
-    return '';
-  };
-
+  // Extract ALL product images comprehensively
   const extractImages = (): string[] => {
     const images: string[] = [];
     const baseUrl = new URL(url).origin;
-    const imgRegex = /<img[^>]*(?:src|data-src|srcset)=["']([^"']+)["'][^>]*>/gi;
+    const seenNormalized = new Set<string>();
+
+    const addImage = (imgUrl: string) => {
+      if (!imgUrl || imgUrl.length < 10) return;
+      // Skip non-product images
+      if (/icon|logo|avatar|button|social|payment|badge|flag|arrow|close|search|cart|menu|spinner|loading/i.test(imgUrl)) return;
+      
+      let resolved = imgUrl;
+      if (resolved.startsWith('//')) resolved = 'https:' + resolved;
+      else if (resolved.startsWith('/')) resolved = baseUrl + resolved;
+      else if (!resolved.startsWith('http')) return;
+
+      // Normalize for dedup
+      const normalized = resolved.split('?')[0].toLowerCase();
+      if (seenNormalized.has(normalized)) return;
+      seenNormalized.add(normalized);
+      images.push(resolved);
+    };
+
+    // 1. Standard img tags - src, data-src, data-large, data-zoom, data-full
+    const imgRegex = /<img[^>]+>/gi;
     let match;
     while ((match = imgRegex.exec(html)) !== null) {
-      let imgUrl = match[1].split(',')[0].split(' ')[0];
-      if (imgUrl.includes('icon') || imgUrl.includes('logo') ||
-          imgUrl.includes('thumb') || imgUrl.includes('avatar') ||
-          imgUrl.includes('ui/') || imgUrl.includes('button')) continue;
-      if (imgUrl.startsWith('//')) imgUrl = 'https:' + imgUrl;
-      else if (imgUrl.startsWith('/')) imgUrl = baseUrl + imgUrl;
-      else if (!imgUrl.startsWith('http')) continue;
-      images.push(imgUrl);
+      const tag = match[0];
+      // Extract all image-related attributes
+      const attrs = ['data-large', 'data-zoom', 'data-full', 'data-original', 'data-src', 'src'];
+      for (const attr of attrs) {
+        const attrMatch = tag.match(new RegExp(`${attr}=["']([^"']+)["']`, 'i'));
+        if (attrMatch?.[1]) {
+          addImage(attrMatch[1].split(',')[0].split(' ')[0]);
+        }
+      }
+      // Extract srcset - get the largest image
+      const srcsetMatch = tag.match(/srcset=["']([^"']+)["']/i);
+      if (srcsetMatch?.[1]) {
+        const srcsetParts = srcsetMatch[1].split(',').map(s => s.trim());
+        // Get the last (usually largest) entry
+        for (const part of srcsetParts) {
+          const partUrl = part.split(' ')[0];
+          if (partUrl) addImage(partUrl);
+        }
+      }
     }
-    return [...new Set(images)].slice(0, 5);
+
+    // 2. JSON-LD structured data
+    const jsonLdRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+    let jsonLdMatch;
+    while ((jsonLdMatch = jsonLdRegex.exec(html)) !== null) {
+      try {
+        const data = JSON.parse(jsonLdMatch[1]);
+        const extractFromJsonLd = (obj: any) => {
+          if (!obj) return;
+          if (typeof obj.image === 'string') addImage(obj.image);
+          if (Array.isArray(obj.image)) obj.image.forEach((i: any) => typeof i === 'string' ? addImage(i) : i?.url && addImage(i.url));
+          if (obj['@graph']) obj['@graph'].forEach(extractFromJsonLd);
+        };
+        extractFromJsonLd(data);
+      } catch { /* ignore malformed JSON-LD */ }
+    }
+
+    // 3. Open Graph images
+    const ogRegex = /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/gi;
+    while ((match = ogRegex.exec(html)) !== null) {
+      addImage(match[1]);
+    }
+
+    // 4. Background images in style attributes
+    const bgRegex = /url\(['"]?([^'")\s]+)['"]?\)/gi;
+    while ((match = bgRegex.exec(html)) !== null) {
+      const bgUrl = match[1];
+      if (/\.(jpg|jpeg|png|webp)/i.test(bgUrl)) {
+        addImage(bgUrl);
+      }
+    }
+
+    return images.slice(0, 15);
   };
 
+  // Extract price with better patterns
   const extractPrice = (): number => {
     const patterns = [
-      /[\$₦£€]\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/,
-      /(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*[\$₦£€]/,
-      /"price[^"]*"[^>]*>[\s\S]*?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/i,
+      /₦\s*([\d,]+(?:\.\d{2})?)/,
+      /NGN\s*([\d,]+(?:\.\d{2})?)/,
+      /\$\s*([\d,]+(?:\.\d{2})?)/,
+      /USD\s*([\d,]+(?:\.\d{2})?)/,
+      /£\s*([\d,]+(?:\.\d{2})?)/,
+      /€\s*([\d,]+(?:\.\d{2})?)/,
+      /"price"[^}]*?(\d[\d,.]+)/i,
       /data-price=["'](\d+(?:\.\d{2})?)/i,
+      /itemprop=["']price["'][^>]*content=["'](\d+(?:\.\d{2})?)/i,
     ];
     for (const pattern of patterns) {
       const match = html.match(pattern);
@@ -135,28 +166,76 @@ async function scrapeProductPage(url: string): Promise<ProductData> {
   };
 
   const detectCurrency = (): string => {
-    if (html.includes('₦') || html.includes('NGN') || html.includes('Naira')) return 'NGN';
+    if (html.includes('₦') || /NGN/i.test(html) || html.includes('Naira')) return 'NGN';
     if (html.includes('$') || html.includes('USD')) return 'USD';
     if (html.includes('£') || html.includes('GBP')) return 'GBP';
     if (html.includes('€') || html.includes('EUR')) return 'EUR';
     return 'USD';
   };
 
+  // Extract product name from multiple sources
+  const extractName = (): string => {
+    // Try JSON-LD first
+    const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+    if (jsonLdMatch) {
+      try {
+        const data = JSON.parse(jsonLdMatch[1]);
+        if (data.name) return data.name;
+        if (data['@graph']) {
+          for (const item of data['@graph']) {
+            if (item['@type'] === 'Product' && item.name) return item.name;
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    // Try og:title
+    const ogMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i);
+    if (ogMatch?.[1]) return ogMatch[1].trim();
+    // Try h1
+    const h1Match = html.match(/<h1[^>]*>([^<]+)</i);
+    if (h1Match?.[1]?.trim()) return h1Match[1].trim();
+    // Try title tag
+    const titleMatch = html.match(/<title>([^<]+)</i);
+    if (titleMatch?.[1]?.trim()) return titleMatch[1].trim();
+    return 'Unnamed Product';
+  };
+
+  // Extract description from multiple sources
+  const extractDescription = (): string => {
+    // Try JSON-LD
+    const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+    if (jsonLdMatch) {
+      try {
+        const data = JSON.parse(jsonLdMatch[1]);
+        if (data.description) return data.description;
+      } catch { /* ignore */ }
+    }
+    // Try meta description
+    const metaMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
+    if (metaMatch?.[1]?.trim()) return metaMatch[1].trim();
+    // Try og:description
+    const ogMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
+    if (ogMatch?.[1]?.trim()) return ogMatch[1].trim();
+    return '';
+  };
+
+  const images = extractImages();
+  console.log(`Extracted ${images.length} images from ${url}`);
+
   return {
-    name: extractText(selectors.name, html) || 'Unnamed Product',
+    name: extractName(),
     price: extractPrice(),
     currency: detectCurrency(),
-    images: extractImages(),
-    description: extractText(selectors.description, html) || '',
+    images,
+    description: extractDescription(),
     specifications: {},
-    brand: extractText(selectors.brand || [], html) || undefined,
-    model: extractText(['model', 'sku', 'model-number'], html) || undefined,
+    brand: undefined,
+    model: undefined,
   };
 }
 
-// AI rewriting using Lovable AI Gateway
 async function rewriteWithAI(productData: ProductData, lovableApiKey: string): Promise<AIRewrittenData> {
-  console.log('Rewriting content with Lovable AI...');
+  console.log('Rewriting content with AI...');
 
   const prompt = `You are a product copywriter for PawaMore Systems, Nigeria's leading solar and battery solutions provider.
 
@@ -178,12 +257,13 @@ GUIDELINES:
 7. Keep tone professional but approachable
 8. Optimize for SEO with Nigerian keywords
 9. Suggest appropriate product category
+10. Write a COMPLETE, detailed description - at least 2-3 full paragraphs
 
 OUTPUT FORMAT (JSON only, no other text):
 {
   "name": "Compelling product name (keep original name structure)",
   "short_description": "One punchy sentence (max 160 chars)",
-  "description": "Full rewritten description (2-3 compelling paragraphs with Nigerian context)",
+  "description": "Full rewritten description (2-3 compelling paragraphs with Nigerian context. Be detailed and complete.)",
   "key_features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4"],
   "benefits": ["Benefit 1 for Nigerian customers", "Benefit 2", "Benefit 3"],
   "meta_description": "SEO-optimized meta description",
@@ -203,23 +283,58 @@ Return ONLY valid JSON, no markdown, no other text.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-3-flash-preview',
         messages: [
-          { role: 'system', content: 'You are a professional Nigerian e-commerce copywriter. Return only valid JSON.' },
+          { role: 'system', content: 'You are a professional Nigerian e-commerce copywriter. Return only valid JSON. Write complete, detailed descriptions.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: 4096,
       }),
     });
 
     if (!response.ok) {
+      if (response.status === 429) throw new Error('AI rate limit exceeded. Try again in a minute.');
+      if (response.status === 402) throw new Error('AI credits exhausted. Add funds in Settings > Workspace > Usage.');
       throw new Error(`AI API error: ${response.status}`);
     }
 
     const result = await response.json();
+    const finishReason = result.choices?.[0]?.finish_reason;
+    if (finishReason === 'length' || finishReason === 'MAX_TOKENS') {
+      console.warn('AI output truncated, retrying with higher limit...');
+      const retryRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-3-flash-preview',
+          messages: [
+            { role: 'system', content: 'You are a professional Nigerian e-commerce copywriter. Return only valid JSON.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 8192,
+        }),
+      });
+      if (retryRes.ok) {
+        const retryData = await retryRes.json();
+        const retryContent = retryData.choices?.[0]?.message?.content?.trim() ?? '';
+        const retryJson = retryContent.replace(/```json\n?|\n?```/g, '').trim();
+        return JSON.parse(retryJson) as AIRewrittenData;
+      }
+    }
+
     const content = result.choices[0].message.content.trim();
-    const jsonContent = content.replace(/```json\n?|\n?```/g, '').trim();
+    let jsonContent = content.replace(/```json\n?|\n?```/g, '').trim();
+    // Find JSON object if surrounded by text
+    const jsonStart = jsonContent.indexOf('{');
+    const jsonEnd = jsonContent.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd > jsonStart) {
+      jsonContent = jsonContent.slice(jsonStart, jsonEnd + 1);
+    }
     const aiData: AIRewrittenData = JSON.parse(jsonContent);
 
     console.log('AI rewriting complete');
@@ -242,25 +357,41 @@ Return ONLY valid JSON, no markdown, no other text.`;
   }
 }
 
-async function uploadImages(images: string[], supabase: ReturnType<typeof createClient>): Promise<string[]> {
-  console.log('Uploading images to storage...');
+async function uploadImages(images: string[], supabase: ReturnType<typeof createClient>, sourceUrl: string): Promise<string[]> {
+  console.log(`Uploading ${images.length} images to storage...`);
   const uploadedUrls: string[] = [];
 
-  for (let i = 0; i < Math.min(images.length, 5); i++) {
+  for (let i = 0; i < Math.min(images.length, 10); i++) {
     const imageUrl = images[i];
     try {
-      const response = await fetch(imageUrl);
-      if (!response.ok) continue;
+      const response = await fetch(imageUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'image/*,*/*;q=0.8',
+          'Referer': new URL(sourceUrl).origin + '/',
+        },
+        signal: AbortSignal.timeout(20000),
+        redirect: 'follow',
+      });
+      if (!response.ok) { console.warn(`Image fetch failed (${response.status}): ${imageUrl}`); continue; }
 
-      const blob = await response.blob();
-      const fileName = `${Date.now()}-${i}.${blob.type.split('/')[1] || 'jpg'}`;
+      const contentType = response.headers.get('content-type');
+      if (contentType && !contentType.toLowerCase().startsWith('image/')) continue;
+
+      const blob = await response.arrayBuffer();
+      
+      // Skip tiny images (icons, tracking pixels)
+      if (blob.byteLength < 2000) { console.log(`Skipping tiny image (${blob.byteLength}b): ${imageUrl}`); continue; }
+      
+      const ext = contentType?.includes('png') ? 'png' : contentType?.includes('webp') ? 'webp' : 'jpg';
+      const fileName = `${Date.now()}-${i}-${crypto.randomUUID().slice(0, 6)}.${ext}`;
       const filePath = `products/${fileName}`;
 
       const { error } = await supabase.storage
         .from('product-images')
-        .upload(filePath, blob, { contentType: blob.type, cacheControl: '3600' });
+        .upload(filePath, blob, { contentType: contentType ?? 'image/jpeg', cacheControl: '3600' });
 
-      if (error) { console.error('Upload error:', error); continue; }
+      if (error) { console.error('Upload error:', error.message); continue; }
 
       const { data: { publicUrl } } = supabase.storage
         .from('product-images')
@@ -269,7 +400,7 @@ async function uploadImages(images: string[], supabase: ReturnType<typeof create
       uploadedUrls.push(publicUrl);
       console.log(`Uploaded image ${i + 1}/${images.length}`);
     } catch (error) {
-      console.error(`Failed to upload image ${i}:`, error);
+      console.error(`Failed to upload image ${i}:`, (error as Error).message);
     }
   }
 
@@ -352,10 +483,10 @@ Deno.serve(async (req) => {
     console.log('Starting AI rewrite...');
     const aiData = await rewriteWithAI(productData, lovableApiKey);
 
-    // Step 3: Upload images
-    console.log('Uploading images...');
+    // Step 3: Upload ALL images
+    console.log(`Uploading ${productData.images.length} images...`);
     const imageUrls = productData.images.length > 0
-      ? await uploadImages(productData.images, supabase)
+      ? await uploadImages(productData.images, supabase, url)
       : [];
 
     // Step 4: Build response
@@ -376,6 +507,8 @@ Deno.serve(async (req) => {
       meta_description: aiData.meta_description,
       seo_keywords: aiData.seo_keywords.join(', '),
       images: imageUrls,
+      total_images_found: productData.images.length,
+      total_images_uploaded: imageUrls.length,
       nigerian_context: aiData.nigerian_context,
       scraped_at: new Date().toISOString(),
     };
