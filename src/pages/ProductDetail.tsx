@@ -258,9 +258,18 @@ const ProductDetail = () => {
     <ErrorBoundary>
       <Layout>
       <div className="container py-6 sm:py-10 md:py-16 px-4 sm:px-6">
-        <Link to="/shop" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-4 sm:mb-6">
-          <ChevronLeft className="w-4 h-4 mr-1" /> Back to Products
-        </Link>
+          <nav aria-label="Breadcrumb" className="mb-2">
+            <ol className="flex items-center text-sm text-muted-foreground space-x-2">
+              <li><Link to="/" className="hover:underline">Home</Link></li>
+              <li><span aria-hidden="true">/</span></li>
+              <li><Link to="/shop" className="hover:underline">Shop</Link></li>
+              <li><span aria-hidden="true">/</span></li>
+              <li aria-current="page" className="font-semibold truncate">{product.name}</li>
+            </ol>
+          </nav>
+          <Link to="/shop" aria-label="Back to Products" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-4 sm:mb-6">
+            <ChevronLeft className="w-4 h-4 mr-1" /> Back to Products
+          </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
           {/* Images & Videos */}
@@ -318,7 +327,10 @@ const ProductDetail = () => {
             {product.product_categories && (
               <span className="text-xs font-display font-semibold text-primary uppercase tracking-wider">{(product.product_categories as any).name}</span>
             )}
-            <h1 className="text-xl sm:text-2xl lg:text-4xl font-extrabold mt-1 mb-3">{product.name}</h1>
+            <h1 id="product-title" aria-describedby="product-desc" className="text-xl sm:text-2xl lg:text-4xl font-extrabold mt-1 mb-3">{product.name}</h1>
+              {(product.short_description || product.description) && (
+                <p id="product-desc" className="sr-only">{stripHtml(product.short_description || product.description || "")}</p>
+              )}
 
             {product.promo_label && (
               <span className="inline-block bg-destructive text-destructive-foreground text-xs font-bold px-3 py-1 rounded-full mb-3">{product.promo_label}</span>
