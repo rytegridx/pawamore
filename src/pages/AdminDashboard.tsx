@@ -212,8 +212,8 @@ const AdminDashboard = () => {
     const { data, error } = await withTimeout(
       Promise.resolve(supabase
         .from("product_reviews")
-        .select("*, products(name)"))
-        .order("created_at", { ascending: false }),
+        .select("*, products(name)")
+        .order("created_at", { ascending: false })),
       REQUEST_TIMEOUT_MS,
       "Load reviews"
     );
@@ -225,8 +225,8 @@ const AdminDashboard = () => {
     const { data, error } = await withTimeout(
       Promise.resolve(supabase
         .from("newsletter_subscriptions")
-        .select("*"))
-        .order("subscribed_at", { ascending: false }),
+        .select("*")
+        .order("subscribed_at", { ascending: false })),
       REQUEST_TIMEOUT_MS,
       "Load newsletters"
     );
