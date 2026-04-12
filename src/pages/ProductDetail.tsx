@@ -174,17 +174,35 @@ const ProductDetail = () => {
 
   const fetchReviews = async (productId: string) => {
     try {
-      const { data: reviewsData } = await supabase
+      // Fetch approved reviews, and also include the current user's review (even if not approved)
+      let query = supabase
         .from("product_reviews")
         .select(`id, user_id, rating, title, content, is_approved, created_at`)
         .eq("product_id", productId)
-        .eq("is_approved", true)
         .order("created_at", { ascending: false });
 
-      setReviews(reviewsData || []);
-      if (reviewsData && reviewsData.length > 0) {
-        const average = reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length;
-        setReviewStats({ average, total: reviewsData.length });
+      if (user?.id) {
+        // include approved reviews or the logged-in user's review
+        query = query.or(`is_approved.eq.true,user_id.eq.${user.id}`);
+      } else {
+        query = query.eq("is_approved", true);
+      }
+
+      const { data: reviewsData, error } = await query;
+      if (error) throw error;
+
+      const deduped = (reviewsData || []).reduce((acc: any[], r: any) => {
+        if (!acc.some(x => x.id === r.id)) acc.push(r);
+        return acc;
+      }, []);
+
+      setReviews(deduped);
+
+      // Compute stats only from approved reviews
+      const approved = deduped.filter(r => r.is_approved);
+      if (approved.length > 0) {
+        const average = approved.reduce((sum: number, r: any) => sum + r.rating, 0) / approved.length;
+        setReviewStats({ average, total: approved.length });
       } else {
         setReviewStats({ average: 0, total: 0 });
       }
