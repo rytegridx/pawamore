@@ -1087,6 +1087,23 @@ const AdminDashboard = () => {
         onOpenChange={setImportModalOpen}
         onSuccess={fetchProducts}
       />
+
+      {/* Move Category Modal */}
+      <MoveCategoryModal
+        open={openMoveCategoryModal}
+        onOpenChange={setOpenMoveCategoryModal}
+        categories={categories}
+        onConfirm={(categoryId) => handleBulkChangeCategory(categoryId)}
+        disabled={selectedCount === 0}
+      />
+
+      {/* Adjust Price Modal */}
+      <AdjustPriceModal
+        open={openAdjustPriceModal}
+        onOpenChange={setOpenAdjustPriceModal}
+        onConfirm={(percent) => handleBulkAdjustPrice(percent)}
+        disabled={selectedCount === 0}
+      />
     </div>
   );
 };
