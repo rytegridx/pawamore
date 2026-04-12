@@ -119,6 +119,8 @@ const AdminDashboard = () => {
   const [trashProducts, setTrashProducts] = useState<Product[]>([]);
   const [purgeDialogOpen, setPurgeDialogOpen] = useState(false);
   const [purgeTarget, setPurgeTarget] = useState<string | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string | null>(null);
   const undoTimeoutRef = useRef<number | null>(null);
 
   const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, label: string) =>
@@ -176,6 +178,7 @@ const AdminDashboard = () => {
       ["reviews", fetchReviews],
       ["newsletters", fetchNewsletters],
       ["trash", fetchTrashProducts],
+      ["categories", fetchCategories],
     ];
 
     const results = await Promise.allSettled(tasks.map(([, run]) => run()));
@@ -205,6 +208,16 @@ const AdminDashboard = () => {
     );
     if (error) throw error;
     setProducts((data as any) || []);
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase.from('product_categories').select('id,name,slug').order('name');
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (err) {
+      console.error('Failed to load categories', err);
+    }
   };
 
   const fetchOrders = async () => {
@@ -289,10 +302,13 @@ const AdminDashboard = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedCount === products.length) {
-      setSelectedIds([]);
+    const ids = displayedProducts.map(p => p.id);
+    const allSelected = ids.every(id => selectedIds.includes(id));
+    if (allSelected) {
+      // remove displayed ids from selection
+      setSelectedIds(prev => prev.filter(id => !ids.includes(id)));
     } else {
-      setSelectedIds(products.map(p => p.id));
+      setSelectedIds(prev => Array.from(new Set([...prev, ...ids])));
     }
   };
 
@@ -353,6 +369,83 @@ const AdminDashboard = () => {
     } else {
       toast({ title: "Bulk update failed", description: error.message, variant: "destructive" });
     }
+  };
+
+  const handleBulkSetFeatured = async (isFeatured: boolean) => {
+    if (selectedIds.length === 0) return;
+    const { error } = await supabase.from('products').update({ is_featured: isFeatured }).in('id', selectedIds);
+    if (!error) {
+      setProducts(products.map(p => selectedIds.includes(p.id) ? { ...p, is_featured: isFeatured } : p));
+      setSelectedIds([]);
+      toast({ title: `Updated featured for ${selectedCount} products` });
+    } else {
+      toast({ title: 'Bulk featured update failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleBulkSetPopular = async (isPopular: boolean) => {
+    if (selectedIds.length === 0) return;
+    const { error } = await supabase.from('products').update({ is_popular: isPopular }).in('id', selectedIds);
+    if (!error) {
+      setProducts(products.map(p => selectedIds.includes(p.id) ? { ...p, is_popular: isPopular } : p));
+      setSelectedIds([]);
+      toast({ title: `Updated popular for ${selectedCount} products` });
+    } else {
+      toast({ title: 'Bulk popular update failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleBulkChangeCategory = async (categoryId: string) => {
+    if (selectedIds.length === 0) return;
+    const { error } = await supabase.from('products').update({ category_id: categoryId }).in('id', selectedIds);
+    if (!error) {
+      setProducts(products.map(p => selectedIds.includes(p.id) ? { ...p, category_id: categoryId } : p));
+      setSelectedIds([]);
+      toast({ title: `Moved ${selectedCount} products to selected category` });
+    } else {
+      toast({ title: 'Bulk category change failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleBulkAdjustPrice = async (percent: number) => {
+    if (selectedIds.length === 0) return;
+    try {
+      const updated = products.map(p => {
+        if (!selectedIds.includes(p.id)) return p;
+        const newPrice = Math.max(0, Math.round(((p.discount_price || p.price) * (1 + percent / 100))));
+        return { ...p, price: newPrice, discount_price: p.discount_price ? newPrice : null };
+      });
+      // update server side by looping (simpler) — could be done in a single RPC for efficiency
+      for (const p of updated.filter(u => selectedIds.includes(u.id))) {
+        const { error } = await supabase.from('products').update({ price: p.price, discount_price: p.discount_price }).eq('id', p.id);
+        if (error) console.error('Price update failed for', p.id, error);
+      }
+      setProducts(updated);
+      setSelectedIds([]);
+      toast({ title: `Adjusted prices for ${selectedCount} products by ${percent}%` });
+    } catch (err: any) {
+      toast({ title: 'Bulk price adjust failed', description: err.message || String(err), variant: 'destructive' });
+    }
+  };
+
+  const exportSelectedCSV = () => {
+    if (selectedIds.length === 0) return;
+    const rows = products.filter(p => selectedIds.includes(p.id)).map(p => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      price: p.price,
+      discount_price: p.discount_price,
+      status: p.status,
+      category_id: p.category_id,
+      stock_quantity: p.stock_quantity
+    }));
+    const csv = [Object.keys(rows[0]).join(',') , ...rows.map(r => Object.values(r).map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'products_export.csv'; a.click();
+    URL.revokeObjectURL(url);
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -427,7 +520,8 @@ const AdminDashboard = () => {
   const filteredOrders = statusFilter === "all" ? orders : orders.filter(o => o.status === statusFilter);
 
   // select-all state: true | false | "indeterminate"
-  const selectAllState: boolean | "indeterminate" = products.length === 0 ? false : (selectedCount === 0 ? false : (selectedCount === products.length ? true : "indeterminate"));
+  const displayedProducts = productCategoryFilter ? products.filter(p => p.category_id === productCategoryFilter) : products;
+  const selectAllState: boolean | "indeterminate" = displayedProducts.length === 0 ? false : (selectedCount === 0 ? false : (selectedCount === displayedProducts.length ? true : "indeterminate"));
 
   return (
     <div className="min-h-screen bg-background">
@@ -555,11 +649,40 @@ const AdminDashboard = () => {
                 <Checkbox checked={selectAllState} onCheckedChange={toggleSelectAll} aria-label={selectedCount === products.length && products.length > 0 ? "Deselect all products" : "Select all products"} />
                 <h2 className="text-lg sm:text-xl font-extrabold">All Products</h2>
                 <div className="sr-only" aria-live="polite">{selectedCount} products selected</div>
+                <div className="flex items-center gap-2 ml-2">
+                  <label className="text-sm text-muted-foreground">Category:</label>
+                  <select value={productCategoryFilter || ""} onChange={(e) => setProductCategoryFilter(e.target.value || null)} className="rounded border border-input px-2 py-1 text-sm">
+                    <option value="">All</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <Button size="sm" onClick={() => { 
+                    // select displayed products
+                    const ids = displayedProducts.map(p => p.id);
+                    setSelectedIds(prev => {
+                      const allSelected = ids.every(id => prev.includes(id));
+                      return allSelected ? prev.filter(id => !ids.includes(id)) : Array.from(new Set([...prev, ...ids]));
+                    });
+                  }}>Select by filter</Button>
+                </div>
                 {selectedCount > 0 && (
                   <div className="flex gap-2">
                     <Button size="sm" variant="destructive" onClick={handleBulkDelete}>Delete ({selectedCount})</Button>
                     <Button size="sm" onClick={() => handleBulkUpdateStatus('active')}>Publish</Button>
                     <Button size="sm" onClick={() => handleBulkUpdateStatus('draft')}>Unpublish</Button>
+                    <Button size="sm" onClick={() => handleBulkSetFeatured(true)}>Set Featured</Button>
+                    <Button size="sm" onClick={() => handleBulkSetFeatured(false)}>Unset Featured</Button>
+                    <Button size="sm" onClick={() => handleBulkSetPopular(true)}>Set Popular</Button>
+                    <Button size="sm" onClick={() => handleBulkSetPopular(false)}>Unset Popular</Button>
+                    <Button size="sm" onClick={() => {
+                      const cat = prompt('Enter category id to move selected products to:');
+                      if (cat) handleBulkChangeCategory(cat);
+                    }}>Move Category</Button>
+                    <Button size="sm" onClick={() => {
+                      const p = prompt('Enter price adjustment percentage (e.g. 10 or -5):');
+                      const num = p ? Number(p) : NaN;
+                      if (!isNaN(num)) handleBulkAdjustPrice(num);
+                    }}>Adjust Price %</Button>
+                    <Button size="sm" onClick={() => exportSelectedCSV()}>Export CSV</Button>
                   </div>
                 )}
               </div>
