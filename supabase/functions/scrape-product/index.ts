@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 type ScraperStatus = "pending" | "running" | "success" | "error";
@@ -50,8 +50,8 @@ Return ONLY valid JSON (no markdown / no commentary) in this exact shape:
 {
   "name": "string",
   "slug": "kebab-case-slug",
-  "short_description": "max 200 chars",
-  "description": "<html content>",
+  "short_description": "max 200 chars - complete sentence summarizing the product",
+  "description": "<html content - FULL rich description with all paragraphs, features, benefits. Do NOT truncate>",
   "price": 0,
   "discount_price": null,
   "specs": { "Key": "Value" },
@@ -72,10 +72,21 @@ Return ONLY valid JSON (no markdown / no commentary) in this exact shape:
 }
 
 Rules:
-- Extract all meaningful product fields found on the page. If a field has no dedicated key above, put it in extra_fields.
+- Extract ALL meaningful product fields found on the page. If a field has no dedicated key above, put it in extra_fields.
 - price must be numeric NGN. If source is another currency, convert approximately to NGN and keep original text in original_price_text.
 - slug must be lowercase kebab-case, <= 120 chars.
-- images must be direct image URLs from the product gallery where possible.
+- IMAGES: Extract ALL product gallery/carousel images. Look for:
+  * Main product images and thumbnails (thumbnails often link to full-size versions)
+  * data-src, data-large, data-zoom, data-full attributes (lazy-loaded images)
+  * srcset values (pick the largest resolution)
+  * Background images in style attributes
+  * JSON-LD product image arrays
+  * Open Graph og:image tags
+  * Images inside gallery, carousel, slider, swiper containers
+  * Do NOT include icons, logos, UI elements, social media icons, payment badges
+  * Return the HIGHEST resolution version of each image
+  * Typically products have 2-10 images - extract ALL of them
+- description must be COMPLETE. Include all paragraphs, features, benefits found on the page. Do not truncate.
 - If stock is unknown, use stock_quantity 10 and status active.
 - Do not invent unavailable values.`;
 
@@ -93,8 +104,14 @@ function compactHtml(raw: string): string {
   let text = removeAll(raw, /<script\b[^>]*>[\s\S]*?<\/script[^>]*>/gi);
   text = removeAll(text, /<style\b[^>]*>[\s\S]*?<\/style[^>]*>/gi);
   text = removeAll(text, /<!--[\s\S]*?-->/g);
+  // Remove SVG elements (icons/logos)
+  text = removeAll(text, /<svg\b[^>]*>[\s\S]*?<\/svg[^>]*>/gi);
+  // Remove nav, footer, header elements to focus on product content
+  text = removeAll(text, /<nav\b[^>]*>[\s\S]*?<\/nav[^>]*>/gi);
+  text = removeAll(text, /<footer\b[^>]*>[\s\S]*?<\/footer[^>]*>/gi);
   text = text.replace(/\s{2,}/g, " ");
-  return text.slice(0, 45000);
+  // Increased limit to capture more product data
+  return text.slice(0, 60000);
 }
 
 function slugify(text: string): string {
@@ -116,7 +133,7 @@ function inferMode(url: URL, explicitMode?: ScrapeMode): ScrapeMode {
 }
 
 function isLikelyProductUrl(value: string): boolean {
-  return /\/product\//i.test(value);
+  return /\/product[s]?\//i.test(value) || /\/shop\/.+/i.test(value);
 }
 
 function sanitizeUrl(raw: string): string {
@@ -131,10 +148,15 @@ function sanitizeUrl(raw: string): string {
   return parsed.toString();
 }
 
-async function fetchText(url: string, timeoutMs = 15000): Promise<string> {
+async function fetchText(url: string, timeoutMs = 20000): Promise<string> {
   const res = await fetch(url, {
-    headers: { "User-Agent": "PawaMore-Scraper/2.0 (+https://pawamore.com)" },
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+    },
     signal: AbortSignal.timeout(timeoutMs),
+    redirect: "follow",
   });
   if (!res.ok) {
     throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
@@ -219,6 +241,13 @@ async function discoverProductUrls(rootUrl: string, limit: number): Promise<stri
   }
 
   if (discovered.size < limit) {
+    try {
+      const mainSitemapLocs = await trySitemap(`${origin}/sitemap.xml`);
+      for (const loc of mainSitemapLocs) addIfProduct(loc);
+    } catch { /* ignore */ }
+  }
+
+  if (discovered.size < limit) {
     const html = await fetchText(rootUrl, 12000);
     extractProductLinksFromHtml(html, rootUrl).forEach((u) => addIfProduct(u));
   }
@@ -227,10 +256,18 @@ async function discoverProductUrls(rootUrl: string, limit: number): Promise<stri
 }
 
 function parseJsonFromModel(rawText: string): ExtractedProduct {
-  const jsonText = rawText
+  let jsonText = rawText
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```\s*$/, "")
     .trim();
+
+  // Try to find JSON object if there's surrounding text
+  const jsonStart = jsonText.indexOf("{");
+  const jsonEnd = jsonText.lastIndexOf("}");
+  if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+    jsonText = jsonText.slice(jsonStart, jsonEnd + 1);
+  }
+
   return JSON.parse(jsonText) as ExtractedProduct;
 }
 
@@ -264,8 +301,13 @@ async function uploadImageToStorage(
 ): Promise<string> {
   try {
     const imageRes = await fetch(sourceUrl, {
-      headers: { "User-Agent": "PawaMore-Scraper/2.0 (+https://pawamore.com)" },
-      signal: AbortSignal.timeout(20000),
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "image/*,*/*;q=0.8",
+        "Referer": new URL(sourceUrl).origin + "/",
+      },
+      signal: AbortSignal.timeout(25000),
+      redirect: "follow",
     });
     if (!imageRes.ok) return sourceUrl;
 
@@ -278,6 +320,10 @@ async function uploadImageToStorage(
     )}/${crypto.randomUUID()}.${ext}`;
 
     const bytes = await imageRes.arrayBuffer();
+    
+    // Skip tiny images (likely icons/tracking pixels)
+    if (bytes.byteLength < 2000) return sourceUrl;
+
     const { error: uploadError } = await supabase.storage
       .from("product-images")
       .upload(path, bytes, {
@@ -292,7 +338,8 @@ async function uploadImageToStorage(
 
     const { data } = supabase.storage.from("product-images").getPublicUrl(path);
     return data.publicUrl;
-  } catch {
+  } catch (err) {
+    console.warn("Image upload error:", (err as Error).message);
     return sourceUrl;
   }
 }
@@ -365,6 +412,9 @@ async function extractWithAI(
   html: string
 ): Promise<ExtractedProduct> {
   const compacted = compactHtml(html);
+  
+  console.log(`AI extraction for ${sourceUrl}, HTML size: ${compacted.length} chars`);
+  
   const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -380,17 +430,58 @@ async function extractWithAI(
           content: `SOURCE_URL: ${sourceUrl}\n\nHTML:\n${compacted}`,
         },
       ],
-      max_tokens: 2200,
+      max_tokens: 8192,
       temperature: 0.1,
     }),
   });
 
   if (!aiRes.ok) {
+    const errText = await aiRes.text();
+    console.error("AI error response:", errText);
+    if (aiRes.status === 429) {
+      throw new Error("AI rate limit exceeded. Please try again in a minute.");
+    }
+    if (aiRes.status === 402) {
+      throw new Error("AI credits exhausted. Please add funds in Settings > Workspace > Usage.");
+    }
     throw new Error(`AI extraction failed: HTTP ${aiRes.status}`);
   }
 
   const aiData = await aiRes.json();
+  const finishReason = aiData.choices?.[0]?.finish_reason;
+  if (finishReason === "length" || finishReason === "MAX_TOKENS") {
+    console.warn("AI output was truncated (finish_reason:", finishReason, "). Retrying with higher limit...");
+    // Retry with even higher token limit
+    const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lovableApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: EXTRACTION_PROMPT },
+          {
+            role: "user",
+            content: `SOURCE_URL: ${sourceUrl}\n\nHTML:\n${compacted}`,
+          },
+        ],
+        max_tokens: 16384,
+        temperature: 0.1,
+      }),
+    });
+    if (retryRes.ok) {
+      const retryData = await retryRes.json();
+      const retryText: string = retryData.choices?.[0]?.message?.content ?? "";
+      return parseJsonFromModel(retryText);
+    }
+  }
+
   const rawText: string = aiData.choices?.[0]?.message?.content ?? "";
+  if (!rawText.trim()) {
+    throw new Error("AI returned empty response");
+  }
   return parseJsonFromModel(rawText);
 }
 
@@ -400,6 +491,15 @@ function normalizeExtracted(product: ExtractedProduct, sourceUrl: string): Extra
   const safeImages = Array.isArray(product.images)
     ? product.images.filter((img) => typeof img?.url === "string" && img.url.length > 0)
     : [];
+
+  // Deduplicate images by URL
+  const seenUrls = new Set<string>();
+  const uniqueImages = safeImages.filter((img) => {
+    const normalized = img.url.split("?")[0].toLowerCase();
+    if (seenUrls.has(normalized)) return false;
+    seenUrls.add(normalized);
+    return true;
+  });
 
   return {
     name,
@@ -423,7 +523,7 @@ function normalizeExtracted(product: ExtractedProduct, sourceUrl: string): Extra
         : 10,
     status:
       product.status === "draft" || product.status === "out_of_stock" ? product.status : "active",
-    images: safeImages,
+    images: uniqueImages,
     brand_name: product.brand_name?.trim() || undefined,
     category_name: product.category_name?.trim() || undefined,
     product_type: product.product_type?.trim() || undefined,
@@ -450,9 +550,13 @@ async function importSingleProduct(
   error?: string;
 }> {
   try {
-    const html = await fetchText(sourceUrl, 18000);
+    const html = await fetchText(sourceUrl, 25000);
+    console.log(`Fetched ${sourceUrl}: ${html.length} chars`);
+    
     const extractedRaw = await extractWithAI(lovableApiKey, sourceUrl, html);
     const extracted = normalizeExtracted(extractedRaw, sourceUrl);
+    
+    console.log(`Extracted: ${extracted.name}, ${extracted.images.length} images, price: ${extracted.price}`);
 
     const brandId = await resolveOrCreateBrandId(supabase, extracted.brand_name);
     const categoryId = await resolveOrCreateCategoryId(supabase, extracted.category_name);
@@ -500,10 +604,14 @@ async function importSingleProduct(
 
     const productId: string = productRow.id;
 
+    // Delete existing images before re-importing
     await supabase.from("product_images").delete().eq("product_id", productId);
 
     if (extracted.images.length > 0) {
+      // Upload up to 10 images
       const limitedImages = extracted.images.slice(0, 10);
+      console.log(`Uploading ${limitedImages.length} images for ${extracted.name}...`);
+      
       const uploaded = await Promise.all(
         limitedImages.map(async (img) => ({
           image_url: await uploadImageToStorage(supabase, img.url, uniqueSlug),
@@ -520,6 +628,7 @@ async function importSingleProduct(
       }));
 
       await supabase.from("product_images").insert(imageRows);
+      console.log(`Inserted ${imageRows.length} images for product ${productId}`);
     }
 
     return {
@@ -529,6 +638,7 @@ async function importSingleProduct(
       product_name: extracted.name,
     };
   } catch (error) {
+    console.error(`Error importing ${sourceUrl}:`, (error as Error).message);
     return {
       url: sourceUrl,
       status: "error",
@@ -656,6 +766,7 @@ Deno.serve(async (req) => {
   };
 
   try {
+    console.log(`Scraper run ${runId}: mode=${mode}, batchSize=${batchSize}, url=${sanitizedUrl}`);
     const productUrls = await discoverProductUrls(sanitizedUrl, batchSize);
 
     if (productUrls.length === 0) {
@@ -667,6 +778,8 @@ Deno.serve(async (req) => {
         { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log(`Discovered ${productUrls.length} product URLs`);
 
     const results: Array<{
       url: string;
@@ -730,6 +843,7 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     const message = (error as Error).message || "Unexpected scraper error";
+    console.error(`Scraper run ${runId} failed:`, message);
     await markRun("error", { error_message: message });
     return new Response(
       JSON.stringify({ run_id: runId, status: "error", error: message }),
