@@ -22,6 +22,8 @@ import CustomerManagement from "@/components/admin/CustomerManagement";
 import NewsletterComposer from "@/components/admin/NewsletterComposer";
 import ScraperManager from "@/components/admin/ScraperManager";
 import ProductImportModal from "@/components/admin/ProductImportModal";
+import MoveCategoryModal from "@/components/admin/MoveCategoryModal";
+import AdjustPriceModal from "@/components/admin/AdjustPriceModal";
 import logo from "@/assets/logo.png";
 
 interface Product {
@@ -121,6 +123,9 @@ const AdminDashboard = () => {
   const [purgeTarget, setPurgeTarget] = useState<string | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [productCategoryFilter, setProductCategoryFilter] = useState<string | null>(null);
+  const [openMoveCategoryModal, setOpenMoveCategoryModal] = useState(false);
+  const [openAdjustPriceModal, setOpenAdjustPriceModal] = useState(false);
+  const [openBulkActionsDialog, setOpenBulkActionsDialog] = useState(false);
   const undoTimeoutRef = useRef<number | null>(null);
 
   const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, label: string) =>
@@ -673,15 +678,13 @@ const AdminDashboard = () => {
                     <Button size="sm" onClick={() => handleBulkSetFeatured(false)}>Unset Featured</Button>
                     <Button size="sm" onClick={() => handleBulkSetPopular(true)}>Set Popular</Button>
                     <Button size="sm" onClick={() => handleBulkSetPopular(false)}>Unset Popular</Button>
-                    <Button size="sm" onClick={() => {
-                      const cat = prompt('Enter category id to move selected products to:');
-                      if (cat) handleBulkChangeCategory(cat);
-                    }}>Move Category</Button>
-                    <Button size="sm" onClick={() => {
-                      const p = prompt('Enter price adjustment percentage (e.g. 10 or -5):');
-                      const num = p ? Number(p) : NaN;
-                      if (!isNaN(num)) handleBulkAdjustPrice(num);
-                    }}>Adjust Price %</Button>
+                    <Button size="sm" onClick={() => setOpenMoveCategoryModal(true)}>Move Category</Button>
+                    <Button size="sm" onClick={() => setOpenAdjustPriceModal(true)}>Adjust Price %</Button>
+
+                    {/* Compact bulk actions for small screens */}
+                    <div className="sm:hidden">
+                      <Button size="sm" onClick={() => setOpenBulkActionsDialog(true)}>Bulk actions</Button>
+                    </div>
                     <Button size="sm" onClick={() => exportSelectedCSV()}>Export CSV</Button>
                   </div>
                 )}
