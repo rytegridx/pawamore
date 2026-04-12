@@ -12,6 +12,7 @@ import {
   Copy,
   CheckCircle,
   ChevronLeft,
+  ChevronRight,
   Image as ImageIcon,
   Play,
   ShieldCheck,
@@ -258,13 +259,13 @@ const ProductDetail = () => {
     <ErrorBoundary>
       <Layout>
       <div className="container py-6 sm:py-10 md:py-16 px-4 sm:px-6">
-          <nav aria-label="Breadcrumb" className="mb-2">
-            <ol className="flex items-center text-sm text-muted-foreground space-x-2">
+          <nav aria-label="Breadcrumb" className="mb-2 hidden sm:block">
+            <ol className="flex items-center text-sm text-muted-foreground">
               <li><Link to="/" className="hover:underline">Home</Link></li>
-              <li><span aria-hidden="true">/</span></li>
+              <li aria-hidden="true"><ChevronRight className="w-3 h-3 text-muted-foreground mx-2" /></li>
               <li><Link to="/shop" className="hover:underline">Shop</Link></li>
-              <li><span aria-hidden="true">/</span></li>
-              <li aria-current="page" className="font-semibold truncate">{product.name}</li>
+              <li aria-hidden="true"><ChevronRight className="w-3 h-3 text-muted-foreground mx-2" /></li>
+              <li aria-current="page" className="font-semibold truncate max-w-xs">{product.name}</li>
             </ol>
           </nav>
           <Link to="/shop" aria-label="Back to Products" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-4 sm:mb-6">
